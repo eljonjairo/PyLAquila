@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>src.Fault.Fault &#8212; PyLAquila 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/groundwork.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyLAquila 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.Fault.Fault</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for src.Fault.Fault</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Fault Class</span>
+
+<span class="sd">   &quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+
+
+<div class="viewcode-block" id="Fault"><a class="viewcode-back" href="../../../src.Fault.html#src.Fault.Fault.Fault">[docs]</a><span class="k">class</span> <span class="nc">Fault</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dh_f</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">in_fault</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="c1"># Check the input dict</span>
+        <span class="k">assert</span> <span class="nb">bool</span><span class="p">(</span><span class="n">in_fault</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot; input dict is empty. &quot;</span>
+
+        <span class="c1"># Assign object attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dh_f</span> <span class="o">=</span> <span class="n">dh_f</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">in_fault</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">exec</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;self.in_&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot; = value&quot;</span><span class="p">]))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_ndip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_nstk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_slip</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                    name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> </span>
+<span class="s1">                    dh_f: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dh_f</span><span class="si">}</span><span class="s1"> </span>
+<span class="s1">                    nstk: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">in_nstk</span><span class="si">}</span><span class="s1"> </span>
+<span class="s1">                    ndip: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">in_ndip</span><span class="si">}</span><span class="s1"> &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="Fault.plot_fault_inputs"><a class="viewcode-back" href="../../../src.Fault.html#src.Fault.Fault.Fault.plot_fault_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">plot_fault_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">constrained_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot; Lon (°)&quot;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot; Lat (°)&quot;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot; Input Slip &quot;</span><span class="p">)</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_rupt_time</span><span class="p">),</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_lon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_lat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_rupt_time</span><span class="p">,</span> <span class="n">levels</span><span class="p">,</span>
+                         <span class="n">colors</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">,),</span> <span class="n">linewidths</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,),</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%2.1f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_lon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_lat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_slip</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.4</span><span class="p">)</span>
+
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot; Lon (°)&quot;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot; Lat (°)&quot;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="n">adjustable</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Rise time (s)&quot;</span><span class="p">)</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">in_lon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_lat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_rise_time</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">.4</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="load_mat_file"><a class="viewcode-back" href="../../../src.Fault.html#src.Fault.Fault.load_mat_file">[docs]</a><span class="k">def</span> <span class="nf">load_mat_file</span><span class="p">(</span><span class="n">infile</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load matlab structure file</span>
+<span class="sd">    :param infile:</span>
+<span class="sd">        infile: string =  matlab structure&#39;s name</span>
+<span class="sd">    : return:</span>
+<span class="sd">        in_fault: dict = input coords, slip, rupture time, rise time of the file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Loading matlab file from </span><span class="si">{</span><span class="s2">&quot;../Inputs/&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">infile</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+
+    <span class="c1"># Load Matlab Finite Fault input file</span>
+    <span class="n">in_fault</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">loadmat</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;../Inputs/&quot;</span><span class="p">,</span> <span class="n">infile</span><span class="p">]))</span>
+    <span class="n">fault</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">z</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;geoZ&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">lat</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;geoLAT&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">lon</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;geoLON&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">slip</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;slipSPL&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">rise_time</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;riseSPL&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">rupt_time</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;timeSPL&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">hypo_lon</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;evLON&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">hypo_lat</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;evLAT&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                 <span class="n">hypo_z</span><span class="o">=</span><span class="n">in_fault</span><span class="p">[</span><span class="n">infile</span><span class="p">][</span><span class="s1">&#39;evDPT&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">fault</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">PyLAquila 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">src.Fault.Fault</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2024, John Diaz.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>
