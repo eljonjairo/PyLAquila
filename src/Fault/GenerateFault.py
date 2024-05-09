@@ -36,26 +36,16 @@ if __name__ == '__main__':
     print(LAquilaFault)
 
     LAquilaFault.load_mat_file('s2009LAQUIL03CIRE')
-    #LAquilaFault.plot_fault_inputs()
-    #LAquilaFault.set_full_fault()
-    #LAquilaFault.set_effective_fault()
-    #LAquilaFault.plot_xyz_slipin()
+    LAquilaFault.plot_fault_input_slip_2d()
+    LAquilaFault.plot_fault_input_slip_3d()
     LAquilaFault.interpolate_coords()
-    #LAquilaFault.interpolate_slip()
-    #LAquilaFault.interpolate_rise_time()
-    #LAquilaFault.interpolate_rupt_time()
- #
- #   LAquilaFault.plot_xyz_slip()
- #   LAquilaFault.plot_xyz_model_slip()
- #   LAquilaFault.compare_xyz_slip()
-    
-    # df = px.data.tips()
-    # fig = px.scatter(df, x="total_bill", y="tip", color="size",
-    #              title="Numeric 'size' values mean continuous color")
+    LAquilaFault.interpolate_slip()
+    LAquilaFault.interpolate_rise_time()
+    LAquilaFault.interpolate_rupture_time()
+    LAquilaFault.plot_fault_xyz_slip_3d()
+    LAquilaFault.set_effective_size_fault()
 
-    # fig.show()
-    
-    # LAquilaFault.triangulate_fault()
+    LAquilaFault.triangulate_fault()
     # LAquilaFault.add_nodes_above_below()
     # LAquilaFault.plot_triangulation()
     #
