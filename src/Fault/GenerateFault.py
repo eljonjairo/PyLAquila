@@ -36,18 +36,18 @@ if __name__ == '__main__':
     print(LAquilaFault)
 
     LAquilaFault.load_mat_file('s2009LAQUIL03CIRE')
-    LAquilaFault.plot_fault_input_slip_2d()
-    LAquilaFault.plot_fault_input_slip_3d()
+    LAquilaFault.plot_input_slip()
     LAquilaFault.interpolate_coords()
     LAquilaFault.interpolate_slip()
     LAquilaFault.interpolate_rise_time()
     LAquilaFault.interpolate_rupture_time()
-    LAquilaFault.plot_fault_xyz_slip_3d()
+    # LAquilaFault.plot_fault_xyz_slip()
+    LAquilaFault.plot_slip()
     LAquilaFault.set_effective_size_fault()
+    LAquilaFault.plot_slip()
 
     LAquilaFault.triangulate_fault()
-    # LAquilaFault.add_nodes_above_below()
-    # LAquilaFault.plot_triangulation()
+    LAquilaFault.plot_triangulation()
     #
     # LAquilaFault.write_univector(out_dir)
     #

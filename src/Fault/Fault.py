@@ -128,7 +128,7 @@ class Fault:
         self.in_ddip = np.linalg.norm(in_ddip_vec)
         self.dip_univec = in_ddip_vec / self.in_ddip
 
-        # Calculate length and number of points in strike an dip direction
+        # Calculate length and number of points in strike and dip direction
         in_ndip, in_nstk = self.in_Z.shape
         self.stk_len = round((in_nstk - 1) * self.in_dstk)
         self.dip_len = round((in_ndip - 1) * self.in_ddip)
@@ -401,48 +401,136 @@ class Fault:
         fig = go.Figure(data=data_a, layout=layout_a)
         fig.show(renderer="browser")
 
-    def plot_fault_input_slip_3d(self):
+    def plot_input_slip(self):
         """ Plot the input slip distribution in lat-lon-z coordinates """
 
         colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
-                        bordercolor="black", title="<b> slip (cm) </b>", x=0.1)
+                        bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
 
-        data_a = [go.Surface(x=self.in_LON, y=self.in_LAT, z=self.in_Z,
-                             surfacecolor=self.in_SLIP,
-                             colorscale=px.colors.sequential.Viridis,
-                             colorbar=colorbar, showscale=True,
-                             lighting=dict(ambient=0.7))]
+        data_a = go.Surface(x=self.in_LON, y=self.in_LAT, z=self.in_Z,
+                            surfacecolor=self.in_SLIP,
+                            colorscale=px.colors.sequential.Viridis,
+                            colorbar=colorbar, showscale=False,
+                            lighting=dict(ambient=0.7))
 
-        tickfont = dict(color="black", size=16, family="Arial Black")
+        tickfont = dict(color="black", size=18, family="Arial Black")
 
         camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
                       eye=dict(x=-1.7, y=-2.0, z=1.2))
 
-        margin = dict(r=30, l=10, b=30, t=20)
+        margin = dict(r=10, l=10, b=10, t=70)
+
+        xaxis_a = dict(title="<b> Longitude (°) </b>", showgrid=True,
+                       showticklabels=True,
+                       gridcolor="black", nticks=4, range=[13.2, 13.7],
+                       tickfont=tickfont, showbackground=True)
+
+        yaxis_a = dict(title="<b> Latitude (°) </b> ", showgrid=True,
+                       showticklabels=True,
+                       gridcolor="black", nticks=4, range=[42.1, 42.5],
+                       tickfont=tickfont, showbackground=True)
+
+        zaxis_a = dict(title="<b> z (Km ) </b>", showgrid=True,
+                       showticklabels=True, gridcolor="black", nticks=4,
+                       range=[-15, 0], tickfont=tickfont, showbackground=True)
+
+        scene_a = dict(camera=camera, xaxis=xaxis_a, yaxis=yaxis_a,
+                       zaxis=zaxis_a, aspectmode='cube')
 
         title = dict(text="<b> Input Slip </b>", font_family="Arial Black",
                      font_color="black", x=0.5, y=0.85)
 
-        xaxis = dict(title="<b> Longitude (°) </b>", showgrid=True,
-                     showticklabels=True,
-                     gridcolor="black", nticks=4, range=[13.2, 13.7],
-                     tickfont=tickfont, showbackground=True)
+        fig = make_subplots(rows=1, cols=2, specs=[[{"type": "surface"},
+                                                    {"type": "heatmap"}]])
 
-        yaxis = dict(title="<b> Latitude (°) </b> ", showgrid=True,
-                     showticklabels=True,
-                     gridcolor="black", nticks=4, range=[42.1, 42.5],
-                     tickfont=tickfont, showbackground=True)
+        fig.add_trace(data_a, row=1, col=1)
+        fig.update_layout(scene=scene_a, margin=margin)
 
-        zaxis = dict(title="<b> z (Km ) </b>", showgrid=True,
-                     showticklabels=True, gridcolor="black", nticks=4,
-                     range=[-15, 0], tickfont=tickfont, showbackground=True)
+        xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
+        yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
+                     autorange="reversed")
 
-        scene = dict(camera=camera, xaxis=xaxis, yaxis=yaxis,
-                     zaxis=zaxis, aspectmode='cube')
+        colorscale = [[0, 'rgb(250, 250, 250)'], [1.0, 'rgb(255, 255, 255)']]
+        contours = dict(coloring='lines',
+                        labelfont=dict(size=14, color='white',),
+                        showlabels=True)
 
-        layout = go.Layout(scene=scene, margin=margin, width=1200, height=800,
-                           title=title)
-        fig = go.Figure(data=data_a, layout=layout)
+        data = go.Heatmap(z=self.in_SLIP, x=self.in_stk_vec, y=self.in_dip_vec,
+                          hoverongaps=False, colorscale='viridis',
+                          colorbar=colorbar)
+        fig.add_trace(data, row=1, col=2)
+        fig.update_layout(xaxis=xaxis, yaxis=yaxis, margin=margin, title=title)
+
+        data_c = go.Contour(z=self.in_RUPT, x=self.in_stk_vec, y=self.in_dip_vec,
+                            contours=contours, showscale=False,
+                            colorscale=colorscale)
+        fig.add_trace(data_c, row=1, col=2)
+        fig.show(renderer="browser")
+
+    def plot_slip(self):
+        """ Plot the interpolated slip distribution in (x, y, z) coordinates """
+
+        colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
+                        bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
+
+        data_a = go.Surface(x=self.XF, y=self.YF, z=self.ZF,
+                            surfacecolor=self.SLIP,
+                            colorscale=px.colors.sequential.Viridis,
+                            colorbar=colorbar, showscale=False,
+                            lighting=dict(ambient=0.7))
+
+        tickfont = dict(color="black", size=18, family="Arial Black")
+
+        camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
+                      eye=dict(x=-1.7, y=-2.0, z=1.2))
+
+        margin = dict(r=10, l=10, b=10, t=70)
+
+        xaxis_a = dict(title="<b> Longitude (°) </b>", showgrid=True,
+                       showticklabels=True,
+                       gridcolor="black", nticks=4, range=[360, 390],
+                       tickfont=tickfont, showbackground=True)
+
+        yaxis_a = dict(title="<b> Latitude (°) </b> ", showgrid=True,
+                       showticklabels=True,
+                       gridcolor="black", nticks=4, range=[4670, 4710],
+                       tickfont=tickfont, showbackground=True)
+
+        zaxis_a = dict(title="<b> z (Km ) </b>", showgrid=True,
+                       showticklabels=True, gridcolor="black", nticks=4,
+                       range=[-15, 0], tickfont=tickfont, showbackground=True)
+
+        scene_a = dict(camera=camera, xaxis=xaxis_a, yaxis=yaxis_a,
+                       zaxis=zaxis_a, aspectmode='cube')
+
+        title = dict(text="<b> Input Slip </b>", font_family="Arial Black",
+                     font_color="black", x=0.5, y=0.85)
+
+        fig = make_subplots(rows=1, cols=2, specs=[[{"type": "surface"},
+                                                    {"type": "heatmap"}]])
+
+        fig.add_trace(data_a, row=1, col=1)
+        fig.update_layout(scene=scene_a, margin=margin)
+
+        xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
+        yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
+                     autorange="reversed")
+
+        colorscale = [[0, 'rgb(250, 250, 250)'], [1.0, 'rgb(255, 255, 255)']]
+        contours = dict(coloring='lines',
+                        labelfont=dict(size=14, color='white', ),
+                        showlabels=True)
+
+        data = go.Heatmap(z=self.SLIP, x=self.stk_vec, y=self.dip_vec,
+                          hoverongaps=False, colorscale='viridis',
+                          colorbar=colorbar)
+        fig.add_trace(data, row=1, col=2)
+        fig.update_layout(xaxis=xaxis, yaxis=yaxis, margin=margin, title=title)
+
+        data_c = go.Contour(z=self.RUPT, x=self.stk_vec, y=self.dip_vec,
+                            contours=contours, showscale=False,
+                            colorscale=colorscale)
+        fig.add_trace(data_c, row=1, col=2)
         fig.show(renderer="browser")
 
     def plot_fault_input_slip_2d(self):
@@ -450,6 +538,7 @@ class Fault:
         xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
         yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
                      autorange="reversed")
+
         fig = go.Figure(data=go.Heatmap(z=self.in_SLIP, x=self.in_stk_vec,
                                         y=self.in_dip_vec, hoverongaps=False))
 
@@ -464,35 +553,43 @@ class Fault:
         fig.show(renderer="browser")
 
     def plot_triangulation(self):
+
         tickfont = dict(color="black", size=19, family="Arial Black")
 
         camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
                       eye=dict(x=-1.0, y=-1.0, z=0.7))
+
         label_z = dict(text="<b>z (Km)</b>", font_family="Arial Black",
                        font_color="black", font_size=26)
-        xaxis = dict(title="<b> xUTM (Km) </b>", showgrid=True, gridcolor="white",
-                     showticklabels=True, nticks=2, range=[360, 390],
-                     tickfont=tickfont, showbackground=True)
-        yaxis = dict(title="<b> yUTM (Km) </b>", showgrid=True, showticklabels=True,
+
+        xaxis = dict(title="<b> xUTM (Km) </b>", showgrid=True,
+                     gridcolor="white", showticklabels=True, nticks=2,
+                     range=[360, 390], tickfont=tickfont, showbackground=True)
+
+        yaxis = dict(title="<b> yUTM (Km) </b>", showgrid=True,
+                     showticklabels=True,
                      gridcolor="white", nticks=2, range=[4670, 4710],
                      tickfont=tickfont, showbackground=True)
+
         zaxis = dict(title=label_z, showgrid=True, showticklabels=True,
-                     gridcolor="white", nticks=4, range=[-15, -1], tickfont=tickfont,
-                     showbackground=True)
+                     gridcolor="white", nticks=4, range=[-15, -1],
+                     tickfont=tickfont, showbackground=True)
+
         margin = dict(r=10, l=20, b=20, t=20)
 
         scene = dict(camera=camera, xaxis=xaxis, yaxis=yaxis, zaxis=zaxis,
                      aspectmode='cube')
 
-        title = dict(text="<b>Fault Triangulation</b>", font_family="Arial Blak",
+        title = dict(text="<b>Fault Triangulation</b>", font_family="Arial Black",
                      font_color="black", font_size=24, x=0.5, y=0.97)
 
         layout = go.Layout(scene=scene, margin=margin, width=1600,
                            height=1200, title=title)
 
-        fig = ff.create_trisurf(x=self.XF, y=self.YF, z=self.ZF,
+        fig = ff.create_trisurf(x=self.xf_vec, y=self.yf_vec, z=self.zf_vec,
                                 colormap=[(1.0, 1.0, 0.6), (0.95, 0.95, 0.6)],
                                 simplices=self.tri, plot_edges=True)
+
         fig.update_layout(layout)
         fig.update(layout_coloraxis_showscale=False)
         fig.show(renderer="browser")
@@ -541,7 +638,7 @@ class Fault:
         self.facet_norm_vec = np.zeros((self.n_tri, 9))
 
         # Vector normal to earth surface
-        n_surf = np.array([0,0,-1])
+        n_surf = np.array([0, 0, -1])
 
         for itri in range(0, self.n_tri):
             iv0 = self.tri[itri, 0]
@@ -563,21 +660,23 @@ class Fault:
             self.facet_norm_vec[itri, 3:6] = vec_strike
             self.facet_norm_vec[itri, 6:9] = vec_dip
 
-    def add_nodes_above_below(self):
-        # Add nodes above an below to the fault
-        x_above = self.xf_vec + self.facet_norm_vec[0] * self.dh_f
-        y_above = self.yf_vec + self.facet_norm_vec[1] * self.dh_f
-        z_above = self.zf_vec + self.facet_norm_vec[2] * self.dh_f
-        x_below = self.xf_vec - self.facet_norm_vec[0] * self.dh_f
-        y_below = self.yf_vec - self.facet_norm_vec[1] * self.dh_f
-        z_below = self.zf_vec - self.facet_norm_vec[2] * self.dh_f
+        # Create nodes above and below to the fault
+        x_above = self.xf_vec + vec_normal[0] * self.dh_f
+        y_above = self.yf_vec + vec_normal[1] * self.dh_f
+        z_above = self.zf_vec + vec_normal[2] * self.dh_f
+        x_below = self.xf_vec - vec_normal[0] * self.dh_f
+        y_below = self.yf_vec - vec_normal[1] * self.dh_f
+        z_below = self.zf_vec - vec_normal[2] * self.dh_f
+
         print()
         print(f" {len(x_above)} nodes added above the fault ")
         print(f" {len(x_below)} nodes added below the fault ")
         print()
+
         self.xf_vec_add = np.concatenate((x_above, x_below), axis=None)
         self.yf_vec_add = np.concatenate((y_above, y_below), axis=None)
         self.zf_vec_add = np.concatenate((z_above, z_below), axis=None)
+
     #
     #     # *************************************************************************
     #
