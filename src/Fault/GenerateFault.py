@@ -29,7 +29,7 @@ if __name__ == '__main__':
     # Output dir for topo file
     out_dir = 'Outputs/'
 
-    dh_f = 0.5  # Output subfaults size in km
+    dh_f = 1.0  # Output subfaults size in km
 
     # Creates a new instance of the Fault class
     LAquilaFault = Fault.Fault(name, dh_f)
@@ -41,17 +41,15 @@ if __name__ == '__main__':
     LAquilaFault.interpolate_slip()
     LAquilaFault.interpolate_rise_time()
     LAquilaFault.interpolate_rupture_time()
-    # LAquilaFault.plot_fault_xyz_slip()
     LAquilaFault.plot_slip()
     LAquilaFault.set_effective_size_fault()
     LAquilaFault.plot_slip()
 
     LAquilaFault.triangulate_fault()
     LAquilaFault.plot_triangulation()
-    #
-    # LAquilaFault.write_univector(out_dir)
-    #
-    # LAquilaFault.save_fault(out_dir)
+
+    LAquilaFault.write_uni_vector(out_dir)
+    LAquilaFault.save_fault(out_dir)
 
 
 

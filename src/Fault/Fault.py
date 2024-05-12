@@ -1,6 +1,8 @@
 """
  Fault Class
 """
+import pickle
+
 import numpy as np
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -16,7 +18,7 @@ class Fault:
     def __init__(self, name: str, dh_f: float):
 
         self.dh_f = dh_f
-        self.name = name + "_dhF" + str(int(self.dh_f)) + "m"
+        self.name = name + "_dhF" + str(int(self.dh_f*1000)) + "m"
 
         self.in_X = None  # Input matriz with the x coordinate of the fault
         self.in_Y = None  # Input matriz with the y coordinate of the fault
@@ -588,7 +590,8 @@ class Fault:
 
         fig = ff.create_trisurf(x=self.xf_vec, y=self.yf_vec, z=self.zf_vec,
                                 colormap=[(1.0, 1.0, 0.6), (0.95, 0.95, 0.6)],
-                                simplices=self.tri, plot_edges=True)
+                                simplices=self.tri, plot_edges=True,
+                                show_colorbar=False)
 
         fig.update_layout(layout)
         fig.update(layout_coloraxis_showscale=False)
@@ -677,46 +680,44 @@ class Fault:
         self.yf_vec_add = np.concatenate((y_above, y_below), axis=None)
         self.zf_vec_add = np.concatenate((z_above, z_below), axis=None)
 
-    #
-    #     # *************************************************************************
-    #
-    # # *                                                                       *
-    # # *                     save files methods section                        *
-    # # *                                                                       *
-    # # *************************************************************************
-    # def save_fault(self, dir):
-    #     print()
-    #     out_file = dir + self.name + ".pickle"
-    #     object_file = open(out_file, 'wb')
-    #     pickle.dump(self, object_file)
-    #     object_file.close()
-    #     print(f" Fault object saved in: {out_file} ")
-    #
-    # def write_univector(self, dir):
-    #     print()
-    #     # Write .vector file
-    #     fvector_header = "%d" % (self.ntri)
-    #     fvector = dir + self.name + ".vector"
-    #     with open(fvector, 'wb') as f:
-    #         np.savetxt(f, self.univector, header=fvector_header,
-    #                    comments=' ', fmt='%10.6f')
-    #     f.close()
-    #
-    #     print(f" vector file saved in: {fvector} ")
-    #
-    # def write_fcoor(self, dir, id, nt, dt):
-    #     print()
-    #     # Write fcoor file
-    #     fcoorHeader = "%d  %d %4.2f " % (self.n_sub_faults, nt, dt)
-    #
-    #     fcoorName = dir + self.name + "_ID_" + id + ".in"
-    #
-    #     with open(fcoorName, 'wb') as f:
-    #         np.savetxt(f, self.fcoor, header=fcoorHeader, comments=' ', fmt='%9.4f')
-    #
-    #     print(f" Coordinates file saved in: {fcoorName} ")
-    #     print(f" Number of subfaults: {self.n_sub_faults} ")
-    #     print(f" Number of time steps: {nt} ")
-    #     print(f" time step: {dt} ")
-    #
-    #     f.close()
+    # *************************************************************************
+    # *                                                                       *
+    # *                     save files methods section                        *
+    # *                                                                       *
+    # *************************************************************************
+    def save_fault(self, dir_):
+        print()
+        out_file = dir_ + self.name + ".pickle"
+        object_file = open(out_file, 'wb')
+        pickle.dump(self, object_file)
+        object_file.close()
+        print(f" Fault object saved in: {out_file} ")
+
+    def write_uni_vector(self, dir_):
+        print()
+        # Write .vector file
+        f_vector_header = f"{self.n_tri:d}"
+        f_vector = dir_ + self.name + ".vector"
+        with open(f_vector, 'wb') as f:
+            np.savetxt(f, self.facet_norm_vec, header=f_vector_header,
+                       comments=' ', fmt='%10.6f')
+        f.close()
+
+        print(f" vector file saved in: {f_vector} ")
+
+    def write_fcoor(self, dir_, fault_id, nt, dt):
+        print()
+        # Write fcoor file
+        fcoorHeader = "%d  %d %4.2f " % (self.nstk*self.ndip, nt, dt)
+
+        fcoorName = dir_ + self.name + "_ID_" + fault_id + ".in"
+
+        with open(fcoorName, 'wb') as f:
+            np.savetxt(f, self.fcoor, header=fcoorHeader, comments=' ', fmt='%9.4f')
+
+        print(f" Coordinates file saved in: {fcoorName} ")
+        print(f" Number of subfaults: {self.nstk*self.ndip} ")
+        print(f" Number of time steps: {nt} ")
+        print(f" time step: {dt} ")
+
+        f.close()
