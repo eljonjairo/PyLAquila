@@ -7,6 +7,7 @@ import numpy as np
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
+import plotly.io as io
 import scipy
 import utm
 from scipy.io import loadmat
@@ -358,6 +359,7 @@ class Fault:
     # *************************************************************************
 
     def plot_fault_xyz_slip_3d(self):
+        io.renderers.default='svg'
         """ Plot the interpolated slip distribution in (x, y, z) coordinates """
 
         colorbar_a = dict(lenmode='fraction', len=0.5, thickness=20,
@@ -401,10 +403,11 @@ class Fault:
                              height=800, title=title_a)
 
         fig = go.Figure(data=data_a, layout=layout_a)
-        fig.show(renderer="browser")
+        fig.show()
 
     def plot_input_slip(self):
         """ Plot the input slip distribution in lat-lon-z coordinates """
+        io.renderers.default='svg'
 
         colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
                         bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
@@ -467,10 +470,11 @@ class Fault:
                             contours=contours, showscale=False,
                             colorscale=colorscale)
         fig.add_trace(data_c, row=1, col=2)
-        fig.show(renderer="browser")
+        fig.show()
 
     def plot_slip(self):
         """ Plot the interpolated slip distribution in (x, y, z) coordinates """
+        io.renderers.default='svg'
 
         colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
                         bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
@@ -533,9 +537,10 @@ class Fault:
                             contours=contours, showscale=False,
                             colorscale=colorscale)
         fig.add_trace(data_c, row=1, col=2)
-        fig.show(renderer="browser")
+        fig.show()
 
     def plot_fault_input_slip_2d(self):
+        io.renderers.default='svg'
         tickfont = dict(color="black", size=12, family="Arial Black")
         xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
         yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
@@ -552,10 +557,10 @@ class Fault:
                                          line_width=2, showscale=False,
                                          colorscale=colorscale))
         fig.add_trace(figc.data[0])
-        fig.show(renderer="browser")
+        fig.show()
 
     def plot_triangulation(self):
-
+        io.renderers.default='svg' 
         tickfont = dict(color="black", size=19, family="Arial Black")
 
         camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
@@ -595,7 +600,7 @@ class Fault:
 
         fig.update_layout(layout)
         fig.update(layout_coloraxis_showscale=False)
-        fig.show(renderer="browser")
+        fig.show()
 
     # *************************************************************************
     # *                                                                       *

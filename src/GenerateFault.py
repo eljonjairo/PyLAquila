@@ -13,7 +13,7 @@
         over the interpolated fault
 """
 
-from src.Fault import Fault
+from src.Classes import Fault
 
 if __name__ == '__main__':
 
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     name = 'LAquilaCirella03_eff'
 
     # Output dir for topo file
-    out_dir = 'Outputs/'
+    out_dir = 'Fault/Outputs/'
 
     dh_f = 1.0  # Output subfaults size in km
 
