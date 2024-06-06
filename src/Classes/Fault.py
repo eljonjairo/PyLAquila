@@ -10,7 +10,6 @@ import plotly.graph_objs as go
 import plotly.io as io
 import scipy
 import utm
-from scipy.io import loadmat
 from scipy.spatial import distance
 from plotly.subplots import make_subplots
 
@@ -38,12 +37,12 @@ class Fault:
         self.XF = None  # Interpolated matriz x coordinate matriz
         self.YF = None  # Interpolated matriz y coordinate matriz
         self.ZF = None  # Interpolated matriz z coordinate matriz
-        self.xf_vec = None  # Interpolated vector with x coordinate of the fault
-        self.yf_vec = None  # Interpolated vector with y coordinate of the fault
-        self.zf_vec = None  # Interpolated vector with z coordinate of the fault
-        self.xf_vec_add = None  # Extra nodes over and under the subfaults
-        self.yf_vec_add = None  # Extra nodes over and under the subfaults
-        self.zf_vec_add = None  # Extra nodes over and under the subfaults
+        self.xf = None  # Interpolated vector with x coordinate of the fault
+        self.yf = None  # Interpolated vector with y coordinate of the fault
+        self.zf = None  # Interpolated vector with z coordinate of the fault
+        self.xf_add = None  # Extra nodes over and under the subfaults
+        self.yf_add = None  # Extra nodes over and under the subfaults
+        self.zf_add = None  # Extra nodes over and under the subfaults
         self.SLIP = None  # Interpolated slip distribution
         self.RUPT = None  # Interpolated rupture time distribution
         self.RISE = None  # Interpolated rise time distribution
@@ -66,13 +65,13 @@ class Fault:
         self.dstk = None  # Size of subfaults in strike direction
         self.n_tri = None  # number of triangles of Delaunay
         self.tri = None  # delaunay triangulation array
-        self.facet_norm_vec = None  # normal, strike and dip vector at each facet
+        self.facet_norm = None  # normal, strike and dip vector at each facet
         self.trib_marker = None  # Triangulation facets marker
 
     def __repr__(self):
         return "Fault name: " + str(self.name) + "dhF: " + str(self.dh_f) + " Km"
 
-    def load_mat_file(self, input_mat):
+    def load_mat_file(self, in_fault):
         """
         Load matlab structure file
         :param input_mat: matlab structure file path:
@@ -80,24 +79,18 @@ class Fault:
         Fault object with input file attributes
         """
 
-        print()
-        print(f" Loading matlab file from {input_mat} ")
-
-        # Load Matlab Finite Fault input file
-        inFault = loadmat("".join(["Inputs/", input_mat, ".mat"]))
-
         # Load original fault coordinates, slip, rise time and rupture time
-        self.in_Z = -inFault[input_mat]['geoZ'][-1][0]
-        self.in_LAT = inFault[input_mat]['geoLAT'][-1][0]
-        self.in_LON = inFault[input_mat]['geoLON'][-1][0]
-        self.in_SLIP = inFault[input_mat]['slipSPL'][-1][0]
-        self.in_RISE = inFault[input_mat]['riseSPL'][-1][0]
-        self.in_RUPT = inFault[input_mat]['timeSPL'][-1][0]
+        self.in_Z = -in_fault['geoZ'][-1][0]
+        self.in_LAT = in_fault['geoLAT'][-1][0]
+        self.in_LON = in_fault['geoLON'][-1][0]
+        self.in_SLIP = in_fault['slipSPL'][-1][0]
+        self.in_RISE = in_fault['riseSPL'][-1][0]
+        self.in_RUPT = in_fault['timeSPL'][-1][0]
 
         # Hypocenter coordinates (Km) 
-        self.hypo_lon = inFault[input_mat]['evLON'][-1][0][0][0]
-        self.hypo_lat = inFault[input_mat]['evLAT'][-1][0][0][0]
-        self.hypo_z = -inFault[input_mat]['evDPT'][-1][0][0][0]
+        self.hypo_lon = in_fault['evLON'][-1][0][0][0]
+        self.hypo_lat = in_fault['evLAT'][-1][0][0][0]
+        self.hypo_z = -in_fault['evDPT'][-1][0][0][0]
 
         # Hypocenter (x, y) utm coords (Km)
         self.hypo_x, self.hypo_y, tmp1, tmp2 = utm.from_latlon(self.hypo_lat,
@@ -228,9 +221,9 @@ class Fault:
         self.stk_vec = self.stk_vec[istk_eff:istk_eff + nstk_eff]
         self.dip_vec = self.dip_vec[idip_eff:idip_eff + ndip_eff]
 
-        self.xf_vec = self.XF.flatten(order='F').transpose()
-        self.yf_vec = self.YF.flatten(order='F').transpose()
-        self.zf_vec = self.ZF.flatten(order='F').transpose()
+        self.xf = self.XF.flatten(order='F').transpose()
+        self.yf = self.YF.flatten(order='F').transpose()
+        self.zf = self.ZF.flatten(order='F').transpose()
 
         print()
         print(f" Original slip matrix dimensions: {slip.shape} ")
@@ -297,9 +290,9 @@ class Fault:
         self.ZF += self.hypo_z - self.ZF[self.hypo_idip, self.hypo_istk]
 
         # From matrix to column vector following fortran
-        self.xf_vec = self.XF.flatten(order='F').transpose()
-        self.yf_vec = self.YF.flatten(order='F').transpose()
-        self.zf_vec = self.ZF.flatten(order='F').transpose()
+        self.xf = self.XF.flatten(order='F').transpose()
+        self.yf = self.YF.flatten(order='F').transpose()
+        self.zf = self.ZF.flatten(order='F').transpose()
 
         print(f" Fault's output dimensions: ")
         print(f" Strike (Km): {self.stk_len:.3f} nstk: {self.nstk} "
@@ -403,7 +396,7 @@ class Fault:
                              height=800, title=title_a)
 
         fig = go.Figure(data=data_a, layout=layout_a)
-        fig.show()
+        fig.show(renderer="browser")
 
     def plot_input_slip(self):
         """ Plot the input slip distribution in lat-lon-z coordinates """
@@ -470,7 +463,7 @@ class Fault:
                             contours=contours, showscale=False,
                             colorscale=colorscale)
         fig.add_trace(data_c, row=1, col=2)
-        fig.show()
+        fig.show(renderer="browser")
 
     def plot_slip(self):
         """ Plot the interpolated slip distribution in (x, y, z) coordinates """
@@ -537,7 +530,7 @@ class Fault:
                             contours=contours, showscale=False,
                             colorscale=colorscale)
         fig.add_trace(data_c, row=1, col=2)
-        fig.show()
+        fig.show(renderer="browser")
 
     def plot_fault_input_slip_2d(self):
         io.renderers.default='svg'
@@ -557,7 +550,7 @@ class Fault:
                                          line_width=2, showscale=False,
                                          colorscale=colorscale))
         fig.add_trace(figc.data[0])
-        fig.show()
+        fig.show(renderer="browser")
 
     def plot_triangulation(self):
         io.renderers.default='svg' 
@@ -593,14 +586,14 @@ class Fault:
         layout = go.Layout(scene=scene, margin=margin, width=1600,
                            height=1200, title=title)
 
-        fig = ff.create_trisurf(x=self.xf_vec, y=self.yf_vec, z=self.zf_vec,
+        fig = ff.create_trisurf(x=self.xf, y=self.yf, z=self.zf,
                                 colormap=[(1.0, 1.0, 0.6), (0.95, 0.95, 0.6)],
                                 simplices=self.tri, plot_edges=True,
                                 show_colorbar=False)
 
         fig.update_layout(layout)
         fig.update(layout_coloraxis_showscale=False)
-        fig.show()
+        fig.show(renderer="browser")
 
     # *************************************************************************
     # *                                                                       *
@@ -617,8 +610,8 @@ class Fault:
         print()
         print(" Fault Triangulation")
 
-        index_fault = np.arange(0, self.xf_vec.size).reshape((self.ndip, self.nstk),
-                                                             order='F')
+        index_fault = np.arange(0, self.xf.size).reshape((self.ndip, self.nstk),
+                                order='F')
 
         # Calculate number of triangles
         self.n_tri = (self.nstk - 1) * (self.ndip - 1) * 2
@@ -643,7 +636,7 @@ class Fault:
         self.trib_marker = np.ones(self.n_tri, )
 
         # Calculate unitary normal, strike and dip vector at each facet
-        self.facet_norm_vec = np.zeros((self.n_tri, 9))
+        self.facet_norm = np.zeros((self.n_tri, 9))
 
         # Vector normal to earth surface
         n_surf = np.array([0, 0, -1])
@@ -653,9 +646,9 @@ class Fault:
             iv1 = self.tri[itri, 1]
             iv2 = self.tri[itri, 2]
 
-            v0 = np.array([self.xf_vec[iv0], self.yf_vec[iv0], self.zf_vec[iv0]])
-            v1 = np.array([self.xf_vec[iv1], self.yf_vec[iv1], self.zf_vec[iv1]])
-            v2 = np.array([self.xf_vec[iv2], self.yf_vec[iv2], self.zf_vec[iv2]])
+            v0 = np.array([self.xf[iv0], self.yf[iv0], self.zf[iv0]])
+            v1 = np.array([self.xf[iv1], self.yf[iv1], self.zf[iv1]])
+            v2 = np.array([self.xf[iv2], self.yf[iv2], self.zf[iv2]])
 
             vec_normal = np.cross(v1 - v0, v2 - v0)
             vec_normal = vec_normal / np.linalg.norm(vec_normal)
@@ -664,26 +657,26 @@ class Fault:
             vec_dip = np.cross(vec_strike, vec_normal)
             vec_dip = vec_dip / np.linalg.norm(vec_dip)
 
-            self.facet_norm_vec[itri, 0:3] = vec_normal
-            self.facet_norm_vec[itri, 3:6] = vec_strike
-            self.facet_norm_vec[itri, 6:9] = vec_dip
+            self.facet_norm[itri, 0:3] = vec_normal
+            self.facet_norm[itri, 3:6] = vec_strike
+            self.facet_norm[itri, 6:9] = vec_dip
 
         # Create nodes above and below to the fault
-        x_above = self.xf_vec + vec_normal[0] * self.dh_f
-        y_above = self.yf_vec + vec_normal[1] * self.dh_f
-        z_above = self.zf_vec + vec_normal[2] * self.dh_f
-        x_below = self.xf_vec - vec_normal[0] * self.dh_f
-        y_below = self.yf_vec - vec_normal[1] * self.dh_f
-        z_below = self.zf_vec - vec_normal[2] * self.dh_f
+        x_above = self.xf + vec_normal[0] * self.dh_f
+        y_above = self.yf + vec_normal[1] * self.dh_f
+        z_above = self.zf + vec_normal[2] * self.dh_f
+        x_below = self.xf - vec_normal[0] * self.dh_f
+        y_below = self.yf - vec_normal[1] * self.dh_f
+        z_below = self.zf - vec_normal[2] * self.dh_f
 
         print()
         print(f" {len(x_above)} nodes added above the fault ")
         print(f" {len(x_below)} nodes added below the fault ")
         print()
 
-        self.xf_vec_add = np.concatenate((x_above, x_below), axis=None)
-        self.yf_vec_add = np.concatenate((y_above, y_below), axis=None)
-        self.zf_vec_add = np.concatenate((z_above, z_below), axis=None)
+        self.xf_add = np.concatenate((x_above, x_below), axis=None)
+        self.yf_add = np.concatenate((y_above, y_below), axis=None)
+        self.zf_add = np.concatenate((z_above, z_below), axis=None)
 
     # *************************************************************************
     # *                                                                       *
@@ -704,7 +697,7 @@ class Fault:
         f_vector_header = f"{self.n_tri:d}"
         f_vector = dir_ + self.name + ".vector"
         with open(f_vector, 'wb') as f:
-            np.savetxt(f, self.facet_norm_vec, header=f_vector_header,
+            np.savetxt(f, self.facet_norm, header=f_vector_header,
                        comments=' ', fmt='%10.6f')
         f.close()
 

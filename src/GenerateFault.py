@@ -12,8 +12,10 @@
         Fault object with slip, rupture time, and rise time distributions
         over the interpolated fault
 """
+from scipy.io import loadmat
 
-from src.Classes import Fault
+from Classes.Fault import Fault
+from pathlib import Path
 
 if __name__ == '__main__':
 
@@ -26,16 +28,30 @@ if __name__ == '__main__':
     # Fault Name
     name = 'LAquilaCirella03_eff'
 
-    # Output dir for topo file
-    out_dir = 'Fault/Outputs/'
-
+    # Output subfaults size in km
     dh_f = 1.0  # Output subfaults size in km
 
+    # Input mat file name
+    name_mat = 's2009LAQUIL03CIRE'
+
+    # Input dir mat file
+    input_mat = 'Inputs/'
+
+    # Output dir for object file
+    out_dir = 'Outputs/Fault/'
+
     # Creates a new instance of the Fault class
-    LAquilaFault = Fault.Fault(name, dh_f)
+    LAquilaFault = Fault(name, dh_f)
     print(LAquilaFault)
 
-    LAquilaFault.load_mat_file('s2009LAQUIL03CIRE')
+    mat_dir = Path('')
+    file_mat = name_mat + '.mat'
+    input_mat = mat_dir / input_mat / file_mat
+
+    print(input_mat)
+
+    inFault = loadmat(input_mat)
+    LAquilaFault.load_mat_file(inFault[name_mat])
     LAquilaFault.plot_input_slip()
     LAquilaFault.interpolate_coords()
     LAquilaFault.interpolate_slip()
@@ -50,18 +66,4 @@ if __name__ == '__main__':
 
     LAquilaFault.write_uni_vector(out_dir)
     LAquilaFault.save_fault(out_dir)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
