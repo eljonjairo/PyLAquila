@@ -1,12 +1,19 @@
+import utm
+import pygmt
+import numpy as np
+import pickle
+from scipy.interpolate import griddata
+from scipy.spatial import Delaunay
+from scipy.spatial import distance
+
+
+
 class Model:
     def __init__(self, name, x_min, x_max, y_min, y_max):
-        @ @-29
 
-        , 9 + 29, 12 @ @
-
-        def __init__(self, name, x_min, x_max, y_min, y_max):
-            self.x_max = x_max
-
+        self.name = name
+        self.x_min = x_min
+        self.x_max = x_max
         self.y_min = y_min
         self.y_max = y_max
         self.X_topo_in = None
@@ -18,14 +25,6 @@ class Model:
 
     def __str__(self):
         model = " Model's name: " + str(self.name) + "\n"
-
-        @ @-42
-
-        , 31 + 45, 26 @ @
-
-        def __str__(self):
-
-        return model
 
     def generate_region_topo(self, zone_number, zone_letter):
         print(" Generate model topography of the region around the model ")
@@ -51,14 +50,7 @@ class Model:
         fig = pygmt.Figure()
         pygmt.makecpt(cmap="geo", series=[-6000, 6000])
 
-        @ @-76
-
-        , 14 + 74, 41 @ @
-
         def generate_model_topo(self, zone_number, zone_letter):
-            fig.colorbar(frame=["xa2000f500+lElevación ", "y+lm"])
-
-        fig.show()
 
         # (x, y) utm coords (Km)
         X_topo, Y_topo, tmp1, tmp2 = utm.from_latlon(LAT_topo, LON_topo,
@@ -86,14 +78,6 @@ class Model:
         X_topo = X_topo.flatten(order='F').transpose()
         Y_topo = Y_topo.flatten(order='F').transpose()
         Z_topo = Z_topo.flatten(order='F').transpose()
-
-        fig = plt.figure()
-        ax = fig.subplots(1, 1)
-        mp = ax.pcolormesh(X_topo, Y_topo, Z_topo, cmap='terrain', vmin=-1, vmax=4)
-        plt.colorbar(mp, location='bottom', label="Elevación (m)", shrink=.6)
-        ax.set_aspect('equal', adjustable='box')
-        ax.set_title('Topografía Italia Central')
-        fig.show()
 
     def save(self, out_dir):
         outTopofile = out_dir + self.out_name + ".pickle"

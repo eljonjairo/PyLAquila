@@ -50,8 +50,8 @@ class Fault:
         self.dip_len = None  # Length in the dip direction
         self.stk_vec = None  # Strike vector
         self.dip_vec = None  # Dip vector
-        self.stk_univec = None  # Strike vector
-        self.dip_univec = None  # Dip vector
+        self.stk_uni = None  # Strike vector
+        self.dip_uni = None  # Dip vector
         self.nstk = None  # Number of subfaults in strike direction
         self.ndip = None  # Number of subfaults in dip direction
         self.hypo_lon = None  # Hypocenter longitude coordinate
@@ -74,7 +74,7 @@ class Fault:
     def load_mat_file(self, in_fault):
         """
         Load matlab structure file
-        :param input_mat: matlab structure file path:
+        :param in_fault: matlab structure with input fault.
         : return:
         Fault object with input file attributes
         """
@@ -115,14 +115,14 @@ class Fault:
                                 self.in_Y[0, 1] - self.in_Y[0, 0],
                                 self.in_Z[0, 1] - self.in_Z[0, 0]])
         self.in_dstk = np.linalg.norm(in_dstk_vec)
-        self.stk_univec = in_dstk_vec / self.in_dstk
+        self.stk_uni = in_dstk_vec / self.in_dstk
 
         # Calculate magnitude and unitary vector of delta in dip direction
         in_ddip_vec = np.array([self.in_X[1, 0] - self.in_X[0, 0],
                                 self.in_Y[1, 0] - self.in_Y[0, 0],
                                 self.in_Z[1, 0] - self.in_Z[0, 0]])
         self.in_ddip = np.linalg.norm(in_ddip_vec)
-        self.dip_univec = in_ddip_vec / self.in_ddip
+        self.dip_uni = in_ddip_vec / self.in_ddip
 
         # Calculate length and number of points in strike and dip direction
         in_ndip, in_nstk = self.in_Z.shape
@@ -257,8 +257,8 @@ class Fault:
         HYPO_DIST = np.zeros((self.ndip, self.nstk))  # Hypocenter distance
 
         # Vectors of size dh_f in strike and dip directions
-        dstk_vec = self.stk_univec * self.dh_f
-        ddip_vec = self.dip_univec * self.dh_f
+        dstk_vec = self.stk_uni * self.dh_f
+        ddip_vec = self.dip_uni * self.dh_f
 
         # Effective size of subfaults in strike and dip directions
         self.dstk = np.linalg.norm(dstk_vec)
@@ -280,8 +280,8 @@ class Fault:
                                        + delta_dip[2])
 
                 # Calculate hypocenter distance in XY coords.
-                XYvec = [self.XF[idip, istk], self.YF[idip, istk]]
-                HYPO_DIST[idip, istk] = distance.euclidean(XYvec,
+                xy = [self.XF[idip, istk], self.YF[idip, istk]]
+                HYPO_DIST[idip, istk] = distance.euclidean(xy,
                                                            [self.hypo_x, self.hypo_y])
         # Find the indexes of the hypocenter
         self.hypo_idip, self.hypo_istk = np.where(HYPO_DIST == np.min(HYPO_DIST))
