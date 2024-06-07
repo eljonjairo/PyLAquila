@@ -46,13 +46,10 @@ if __name__ == '__main__':
     LaquilaModel = Model(in_fault.name, x_min, x_max, y_min, y_max)
     print(LaquilaModel)
 
-    LaquilaModel.generate_region_topo(33, 'N')
-    LaquilaModel.generate_model_topo(dh_topo)
-    LaquilaModel.generate_rectangular_model(dh, z_layer, in_fault, 
+    LaquilaModel.generate_topo_model(33, 'N', dh_topo)
+    LaquilaModel.plot_model_topo()
+    LaquilaModel.generate_rectangular_model(dh, z_layer, in_fault,
                                             dist_to_fault)
     # LaquilaModel.plot_topo()
     # LaquilaModel.plot_rectangular()
-    LaquilaModel.triangulate_3d_model(in_fault)
-
-
-
+    # LaquilaModel.triangulate_3d_model(in_fault)
