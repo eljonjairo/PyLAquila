@@ -50,6 +50,5 @@ if __name__ == '__main__':
     LaquilaModel.plot_model_topo()
     LaquilaModel.generate_rectangular_model(dh, z_layer, in_fault,
                                             dist_to_fault)
-    # LaquilaModel.plot_topo()
-    # LaquilaModel.plot_rectangular()
-    # LaquilaModel.triangulate_3d_model(in_fault)
+    LaquilaModel.plot_model_rect()
+    LaquilaModel.build_triangulate_3d_model(in_fault)

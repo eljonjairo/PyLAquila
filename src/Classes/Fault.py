@@ -352,7 +352,6 @@ class Fault:
     # *************************************************************************
 
     def plot_fault_xyz_slip_3d(self):
-        io.renderers.default='svg'
         """ Plot the interpolated slip distribution in (x, y, z) coordinates """
 
         colorbar_a = dict(lenmode='fraction', len=0.5, thickness=20,
