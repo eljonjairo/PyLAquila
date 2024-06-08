@@ -3,15 +3,12 @@ import copy
 import utm
 import pygmt
 import numpy as np
-import plotly.io as io
-import pickle
 from scipy.interpolate import griddata
 from scipy.spatial import Delaunay
 from scipy.spatial import distance
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
-import plotly.express as px
 from tqdm import tqdm
+import plotly.figure_factory as ff
 
 
 class Model:
@@ -29,6 +26,11 @@ class Model:
         self.x_rect = None  # x coordinate of rectangular model points vector
         self.y_rect = None  # x coordinate of rectangular model points vector
         self.z_rect = None  # x coordinate of rectangular model points vector
+        self.x_model = None  # x coordinate of the whole 3d model
+        self.y_model = None  # y coordinate of the whole 3d model
+        self.z_model = None  # z coordinate of the whole 3d model
+        self.tri_global = None  # Triangulation of the model facets
+        self.trib_marker = None  # Markers of the model facets
 
     def __str__(self):
         model = " Model's name: " + str(self.name) + "\n"
@@ -155,8 +157,8 @@ class Model:
         print(" Adding topo triangulation")
         XY_topo = np.array([self.x_topo, self.y_topo]).transpose()
         tri_global = Delaunay(XY_topo).simplices
-        n_tri = int(tri_global.size/3)
-        trib_marker = np.zeros(n_tri,)
+        n_tri = int(tri_global.size / 3)
+        trib_marker = np.zeros(n_tri, )
 
         print(" Adding fault nodes")
         nx = len(x_model)
@@ -168,7 +170,7 @@ class Model:
         z_model = np.concatenate((z_model, in_fault.zf_add))
 
         print(" Adding fault triangulation")
-        tri_global = np.concatenate((tri_global, in_fault.tri+nx))
+        tri_global = np.concatenate((tri_global, in_fault.tri + nx))
         trib_marker = np.concatenate((trib_marker, in_fault.trib_marker))
 
         print(" Adding rectangular model nodes")
@@ -185,10 +187,39 @@ class Model:
 
         tri_w = facet_x(x_model, y_model, z_model, x_min)
         tri_global = np.concatenate((tri_global, tri_w))
-        tri_bw = np.zeros(int(tri_w.size/3),)
+        tri_bw = np.zeros(int(tri_w.size / 3), )
         trib_marker = np.concatenate((trib_marker, tri_bw))
-        print(f" Facets at x: {x_min}")
+        print(f" Facets at x: {x_min} Km")
 
+        tri_e = facet_x(x_model, y_model, z_model, x_max)
+        tri_global = np.concatenate((tri_global, tri_e))
+        tri_be = np.zeros(int(tri_e.size / 3), )
+        trib_marker = np.concatenate((trib_marker, tri_be))
+        print(f" Facets at x: {x_max} Km")
+
+        tri_s = facet_y(x_model, y_model, z_model, y_min)
+        tri_global = np.concatenate((tri_global, tri_s))
+        tri_bs = np.zeros(int(tri_s.size / 3), )
+        trib_marker = np.concatenate((trib_marker, tri_bs))
+        print(f" Facets at y: {y_min} Km")
+
+        tri_n = facet_y(x_model, y_model, z_model, y_max)
+        tri_global = np.concatenate((tri_global, tri_n))
+        tri_bn = np.zeros(int(tri_n.size / 3), )
+        trib_marker = np.concatenate((trib_marker, tri_bn))
+        print(f" Facets at y: {y_max} Km")
+
+        tri_z = facet_z(x_model, y_model, z_model, z_min)
+        tri_global = np.concatenate((tri_global, tri_z))
+        tri_bz = np.zeros(int(tri_z.size / 3), )
+        trib_marker = np.concatenate((trib_marker, tri_bz))
+        print(f" Facets at z: {z_min} Km")
+
+        self.x_model = x_model
+        self.y_model = y_model
+        self.z_model = z_model
+        self.tri_global = tri_global
+        self.trib_marker = trib_marker
 
     # *************************************************************************
     # *                                                                       *
@@ -219,12 +250,12 @@ class Model:
                                                          colorscale='Viridis',
                                                          opacity=0.8))]
 
-        tickfont = dict(color="black", size=16, family="Arial Black")
 
         camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
                       eye=dict(x=-1.7, y=-2.0, z=1.2))
 
         margin = dict(r=30, l=10, b=30, t=20)
+        tickfont = dict(color="black", size=16, family="Arial Black")
 
         title = dict(text="<b> Rectangular model </b>",
                      font_family="Arial Black", font_color="black", x=0.5,
@@ -252,23 +283,90 @@ class Model:
         fig.show(renderer="browser")
 
     def plot_model_rect(self):
+        tickfont = dict(color="black", size=16, family="Arial Black")
+        title = dict(text="<b> Rectangular model </b>",
+                     font_family="Arial Black", font_color="black", x=0.5,
+                     y=0.85)
+
+        xaxis = dict(title="<b>X (km)</b>", showgrid=True, showticklabels=True,
+                     gridcolor="black", nticks=4, range=[self.x_min, self.x_max],
+                     tickfont=tickfont, showbackground=True)
+
+        yaxis = dict(title="<b>Y (km)</b> ", showgrid=True, showticklabels=True,
+                     gridcolor="black", nticks=4, range=[self.y_min, self.y_max],
+                     tickfont=tickfont, showbackground=True)
+
+        zaxis = dict(title="<b>Z (Km )</b>", showgrid=True, showticklabels=True,
+                     gridcolor="black", nticks=4, range=[self.z_min, self.z_max],
+                     tickfont=tickfont, showbackground=True)
+
+        scene = dict(xaxis=xaxis, yaxis=yaxis, zaxis=zaxis, aspectmode='cube')
+        margin = dict(r=30, l=10, b=30, t=20)
+
+        layout = go.Layout(scene=scene, margin=margin, width=1200, height=800,
+                           title=title)
         fig = go.Figure(data=[go.Scatter3d(x=self.x_rect, y=self.y_rect,
                                            z=self.z_rect, mode='markers',
-                                           marker=dict(size=12,
+                                           marker=dict(size=2,
                                                        color=self.z_rect,
                                                        colorscale='Viridis',
-                                                       opacity=0.8))])
+                                                       opacity=0.9))], layout=layout)
+        fig.show(renderer="browser")
+
+    def plot_triangulation(self):
+        tickfont = dict(color="black", size=19, family="Arial Black")
+
+        camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
+                      eye=dict(x=-1.0, y=-1.0, z=0.7))
+
+        label_z = dict(text="<b>z (Km)</b>", font_family="Arial Black",
+                       font_color="black", font_size=26)
+
+        xaxis = dict(title="<b> xUTM (Km) </b>", showgrid=True,
+                     gridcolor="white", showticklabels=True, nticks=2,
+                     range=[self.x_min, self.x_max], tickfont=tickfont,
+                     showbackground=True)
+
+        yaxis = dict(title="<b> yUTM (Km) </b>", showgrid=True,
+                     showticklabels=True,
+                     gridcolor="white", nticks=2, range=[self.y_min, self.y_max],
+                     tickfont=tickfont, showbackground=True)
+
+        zaxis = dict(title=label_z, showgrid=True, showticklabels=True,
+                     gridcolor="white", nticks=4, range=[self.z_min, self.z_max],
+                     tickfont=tickfont, showbackground=True)
+
+        margin = dict(r=10, l=20, b=20, t=20)
+
+        scene = dict(camera=camera, xaxis=xaxis, yaxis=yaxis, zaxis=zaxis,
+                     aspectmode='cube')
+
+        title = dict(text="<b>Fault Triangulation</b>", font_family="Arial Black",
+                     font_color="black", font_size=24, x=0.5, y=0.97)
+
+        layout = go.Layout(scene=scene, margin=margin, width=1600,
+                           height=1200, title=title)
+
+        fig = ff.create_trisurf(x=self.x_model, y=self.y_model, z=self.z_model,
+                                colormap=[(1.0, 1.0, 0.6), (0.95, 0.95, 0.6)],
+                                simplices=self.tri_global, plot_edges=True,
+                                show_colorbar=False)
+
+        fig.update_layout(layout)
+        fig.update(layout_coloraxis_showscale=False)
         fig.show(renderer="browser")
 
     def save(self, out_dir):
         outTopofile = out_dir + self.out_name + ".pickle"
+
+
 def facet_x(x, y, z, xb):
     ix = np.where(x == xb)
     ye = y[ix]
     ze = z[ix]
     yz = np.array([ye, ze]).transpose()
     tri = Delaunay(yz).simplices
-    n_tri = int(tri.size/3)
+    n_tri = int(tri.size / 3)
     tri_x = np.zeros((n_tri, 3))
     jx = np.asarray(ix).transpose()
 
@@ -281,13 +379,15 @@ def facet_x(x, y, z, xb):
         tri_x[itri, 2] = jx[ztri]
 
     return tri_x
+
+
 def facet_y(x, y, z, yb):
     iy = np.where(y == yb)
     xe = x[iy]
     ze = z[iy]
     xz = np.array([xe, ze]).transpose()
     tri = Delaunay(xz).simplices
-    n_tri = int(tri.size/3)
+    n_tri = int(tri.size / 3)
     tri_y = np.zeros((n_tri, 3))
     jy = np.asarray(iy).transpose()
 
@@ -300,13 +400,15 @@ def facet_y(x, y, z, yb):
         tri_y[itri, 2] = jy[ztri]
 
     return tri_y
+
+
 def facet_z(x, y, z, zb):
     iz = np.where(z == zb)
     xe = x[iz]
     ye = y[iz]
     xy = np.array([xe, ye]).transpose()
     tri = Delaunay(xy).simplices
-    n_tri = int(tri.size/3)
+    n_tri = int(tri.size / 3)
     tri_z = np.zeros((n_tri, 3))
     jz = np.asarray(iz).transpose()
 

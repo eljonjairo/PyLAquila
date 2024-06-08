@@ -7,7 +7,6 @@ import numpy as np
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
-import plotly.io as io
 import scipy
 import utm
 from scipy.spatial import distance
@@ -18,7 +17,7 @@ class Fault:
     def __init__(self, name: str, dh_f: float):
 
         self.dh_f = dh_f
-        self.name = name + "_dhF" + str(int(self.dh_f*1000)) + "m"
+        self.name = name + "_dhF" + str(int(self.dh_f * 1000)) + "m"
 
         self.in_X = None  # Input matriz with the x coordinate of the fault
         self.in_Y = None  # Input matriz with the y coordinate of the fault
@@ -207,17 +206,17 @@ class Fault:
         self.nstk = nstk_eff
         self.ndip = ndip_eff
         self.SLIP = self.SLIP[idip_eff:idip_eff + ndip_eff,
-                              istk_eff:istk_eff + nstk_eff]
+                    istk_eff:istk_eff + nstk_eff]
         self.RUPT = self.RUPT[idip_eff:idip_eff + ndip_eff,
-                              istk_eff:istk_eff + nstk_eff]
+                    istk_eff:istk_eff + nstk_eff]
         self.RISE = self.RISE[idip_eff:idip_eff + ndip_eff,
-                              istk_eff:istk_eff + nstk_eff]
+                    istk_eff:istk_eff + nstk_eff]
         self.XF = self.XF[idip_eff:idip_eff + ndip_eff,
-                          istk_eff:istk_eff + nstk_eff]
+                  istk_eff:istk_eff + nstk_eff]
         self.YF = self.YF[idip_eff:idip_eff + ndip_eff,
-                          istk_eff:istk_eff + nstk_eff]
+                  istk_eff:istk_eff + nstk_eff]
         self.ZF = self.ZF[idip_eff:idip_eff + ndip_eff,
-                          istk_eff:istk_eff + nstk_eff]
+                  istk_eff:istk_eff + nstk_eff]
         self.stk_vec = self.stk_vec[istk_eff:istk_eff + nstk_eff]
         self.dip_vec = self.dip_vec[idip_eff:idip_eff + ndip_eff]
 
@@ -399,7 +398,6 @@ class Fault:
 
     def plot_input_slip(self):
         """ Plot the input slip distribution in lat-lon-z coordinates """
-        io.renderers.default='svg'
 
         colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
                         bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
@@ -449,7 +447,7 @@ class Fault:
 
         colorscale = [[0, 'rgb(250, 250, 250)'], [1.0, 'rgb(255, 255, 255)']]
         contours = dict(coloring='lines',
-                        labelfont=dict(size=14, color='white',),
+                        labelfont=dict(size=14, color='white', ),
                         showlabels=True)
 
         data = go.Heatmap(z=self.in_SLIP, x=self.in_stk_vec, y=self.in_dip_vec,
@@ -466,7 +464,6 @@ class Fault:
 
     def plot_slip(self):
         """ Plot the interpolated slip distribution in (x, y, z) coordinates """
-        io.renderers.default='svg'
 
         colorbar = dict(lenmode='fraction', len=0.5, thickness=20,
                         bordercolor="black", title="<b> slip (cm) </b>", x=-0.1)
@@ -532,7 +529,6 @@ class Fault:
         fig.show(renderer="browser")
 
     def plot_fault_input_slip_2d(self):
-        io.renderers.default='svg'
         tickfont = dict(color="black", size=12, family="Arial Black")
         xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
         yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
@@ -552,7 +548,6 @@ class Fault:
         fig.show(renderer="browser")
 
     def plot_triangulation(self):
-        io.renderers.default='svg' 
         tickfont = dict(color="black", size=19, family="Arial Black")
 
         camera = dict(up=dict(x=0, y=0, z=1), center=dict(x=0, y=0, z=0),
@@ -610,7 +605,7 @@ class Fault:
         print(" Fault Triangulation")
 
         index_fault = np.arange(0, self.xf.size).reshape((self.ndip, self.nstk),
-                                order='F')
+                                                         order='F')
 
         # Calculate number of triangles
         self.n_tri = (self.nstk - 1) * (self.ndip - 1) * 2
@@ -705,15 +700,16 @@ class Fault:
     def write_fcoor(self, dir_, fault_id, nt, dt):
         print()
         # Write fcoor file
-        fcoorHeader = "%d  %d %4.2f " % (self.nstk*self.ndip, nt, dt)
+        fcoorHeader = "%d  %d %4.2f " % (self.nstk * self.ndip, nt, dt)
 
         fcoorName = dir_ + self.name + "_ID_" + fault_id + ".in"
+        fcoor = np.array([self.xf, self.yf, self.zf])
 
         with open(fcoorName, 'wb') as f:
-            np.savetxt(f, self.fcoor, header=fcoorHeader, comments=' ', fmt='%9.4f')
+            np.savetxt(f, fcoor, header=fcoorHeader, comments=' ', fmt='%9.4f')
 
         print(f" Coordinates file saved in: {fcoorName} ")
-        print(f" Number of subfaults: {self.nstk*self.ndip} ")
+        print(f" Number of subfaults: {self.nstk * self.ndip} ")
         print(f" Number of time steps: {nt} ")
         print(f" time step: {dt} ")
 

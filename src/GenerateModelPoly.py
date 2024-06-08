@@ -52,3 +52,4 @@ if __name__ == '__main__':
                                             dist_to_fault)
     LaquilaModel.plot_model_rect()
     LaquilaModel.build_triangulate_3d_model(in_fault)
+    LaquilaModel.plot_triangulation()
