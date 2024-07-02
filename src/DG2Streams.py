@@ -13,7 +13,6 @@ from pathlib import Path
 import obspy
 from obspy.core import UTCDateTime
 from obspy.core.stream import Stream
-import pickle
 
 # DG folder
 DGFolder = "../DGrun_0.5Hz/"
@@ -94,10 +93,3 @@ for sub_f in subfolders:
 
     else:
         print(f" file {file_vx} not found")
-
-
-
-
-#     stfile = DGFolder + Stats[istat] + "_DGVEL.pickle"
-#     print(f" Writing Stream in file: {stfile} ")
-#     st.write(stfile, format="PICKLE")

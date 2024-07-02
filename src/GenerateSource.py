@@ -4,10 +4,12 @@
 import pickle
 from pathlib import Path
 
+import Classes.Source
+
 if __name__ == '__main__':
     print()
     print(" ************************************************ ")
-    print(" *        Starting BroadbandSlip Program        * ")
+    print(" *        Starting GenerateSource Program       * ")
     print(" ************************************************ ")
     print()
 
@@ -15,7 +17,6 @@ if __name__ == '__main__':
     n_scen = 4
     # Characteristic asperity size (Km)
     asp_size = 5.0
-
     # Corner wave number
     kc = 5.0
 
@@ -24,3 +25,5 @@ if __name__ == '__main__':
     Vp = [3.16, 4.83, 5.76, 6.51, 7.00, 7.80]
     Vs = [1.70, 2.60, 3.10, 3.50, 3.80, 4.20]
     Rho = [2500, 2840, 2940, 3150, 3260, 3500]
+
+    outDir = "Outputs/Source/"
