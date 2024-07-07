@@ -65,6 +65,7 @@ for sub_f in subfolders:
             trace_vx.stats.npts = nt
             trace_vx.stats.channel = "DGx"
             trace_vx.data = velox_DG * 100  # cm/s to m/s
+            trace_vx.filter('lowpass', freq=0.5, corners=2, zerophase=True)
             # trace_vx.plot()
 
             trace_vy = obspy.Trace()
@@ -74,6 +75,7 @@ for sub_f in subfolders:
             trace_vy.stats.npts = nt
             trace_vy.stats.channel = "DGy"
             trace_vy.data = veloy_DG * 100  # cm/s to m/s
+            trace_vy.filter('lowpass', freq=0.5, corners=2, zerophase=True)
             # trace_vy.plot()
 
             trace_vz = obspy.Trace()
@@ -83,6 +85,7 @@ for sub_f in subfolders:
             trace_vz.stats.npts = nt
             trace_vz.stats.channel = "DGz"
             trace_vz.data = veloz_DG * 100  # cm/s to m/s
+            trace_vz.filter('lowpass', freq=0.5, corners=2, zerophase=True)
             # trace_vz.plot()
 
             st = Stream([trace_vx, trace_vy, trace_vz])
