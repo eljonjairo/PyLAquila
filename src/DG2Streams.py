@@ -16,6 +16,7 @@ from obspy.core.stream import Stream
 
 # DG folder
 DGFolder = "../DGrun_0.5Hz/"
+# DGFolder = "Reference/"
 
 # Output Folder
 SynFolder = "Outputs/SyntheticVelo/"
@@ -27,8 +28,13 @@ Stats = ["AQK", "AQU", "AQV", "AQA", "AQG", "GSA", "MTR", "FMG", "ANT", "AVZ",
          "CSO1", "LSS", "SUL"]
 
 nstats = int(len(Stats))
+# 0.5 Hz simulations
 nt = 816
 dt = 0.0489741
+
+# 1.0 Hz Reference simulation
+# nt = 817
+# dt = 0.0489196
 
 print("  ")
 print(" START PROGRAM ")
@@ -58,41 +64,44 @@ for sub_f in subfolders:
             veloy_DG = velo_syn_y[istat, :]
             veloz_DG = velo_syn_z[istat, :]
 
-            trace_vx = obspy.Trace()
-            trace_vx.stats.station = Stats[istat]
-            trace_vx.stats.starttime = UTCDateTime(teven)
-            trace_vx.stats.delta = dt
-            trace_vx.stats.npts = nt
-            trace_vx.stats.channel = "DGx"
-            trace_vx.data = velox_DG * 100  # cm/s to m/s
-            trace_vx.filter('lowpass', freq=0.5, corners=2, zerophase=True)
-            # trace_vx.plot()
+            # Check if there is nan values
+            if not np.isnan([velox_DG, veloy_DG, veloz_DG]).any():
 
-            trace_vy = obspy.Trace()
-            trace_vy.stats.station = Stats[istat]
-            trace_vy.stats.starttime = UTCDateTime(teven)
-            trace_vy.stats.delta = dt
-            trace_vy.stats.npts = nt
-            trace_vy.stats.channel = "DGy"
-            trace_vy.data = veloy_DG * 100  # cm/s to m/s
-            trace_vy.filter('lowpass', freq=0.5, corners=2, zerophase=True)
-            # trace_vy.plot()
+                trace_vx = obspy.Trace()
+                trace_vx.stats.station = Stats[istat]
+                trace_vx.stats.starttime = UTCDateTime(teven)
+                trace_vx.stats.delta = dt
+                trace_vx.stats.npts = nt
+                trace_vx.stats.channel = "DGx"
+                trace_vx.data = velox_DG * 100  # cm/s to m/s
+                trace_vx.filter('lowpass', freq=0.5, corners=2, zerophase=True)
+                # trace_vx.plot()
 
-            trace_vz = obspy.Trace()
-            trace_vz.stats.station = Stats[istat]
-            trace_vz.stats.starttime = UTCDateTime(teven)
-            trace_vz.stats.delta = dt
-            trace_vz.stats.npts = nt
-            trace_vz.stats.channel = "DGz"
-            trace_vz.data = veloz_DG * 100  # cm/s to m/s
-            trace_vz.filter('lowpass', freq=0.5, corners=2, zerophase=True)
-            # trace_vz.plot()
+                trace_vy = obspy.Trace()
+                trace_vy.stats.station = Stats[istat]
+                trace_vy.stats.starttime = UTCDateTime(teven)
+                trace_vy.stats.delta = dt
+                trace_vy.stats.npts = nt
+                trace_vy.stats.channel = "DGy"
+                trace_vy.data = veloy_DG * 100  # cm/s to m/s
+                trace_vy.filter('lowpass', freq=0.5, corners=2, zerophase=True)
+                # trace_vy.plot()
 
-            st = Stream([trace_vx, trace_vy, trace_vz])
-            st_file = SynFolder + (sub_f.split('/')[-1] + '_DGVEL_' + Stats[istat]
-                                   + '.pickle')
-            print(f" Writing Stream in file: {st_file} ")
-            st.write(st_file, format="PICKLE")
+                trace_vz = obspy.Trace()
+                trace_vz.stats.station = Stats[istat]
+                trace_vz.stats.starttime = UTCDateTime(teven)
+                trace_vz.stats.delta = dt
+                trace_vz.stats.npts = nt
+                trace_vz.stats.channel = "DGz"
+                trace_vz.data = veloz_DG * 100  # cm/s to m/s
+                trace_vz.filter('lowpass', freq=0.5, corners=2, zerophase=True)
+                # trace_vz.plot()
+
+                st = Stream([trace_vx, trace_vy, trace_vz])
+                st_file = SynFolder + (sub_f.split('/')[-1] + '_DGVEL_' + Stats[istat]
+                                       + '.pickle')
+                print(f" Writing Stream in file: {st_file} ")
+                st.write(st_file, format="PICKLE")
 
     else:
         print(f" file {file_vx} not found")
