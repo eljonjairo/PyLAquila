@@ -5,11 +5,10 @@ import pickle
 
 import numpy as np
 from os import scandir
-from os import remove
 import obspy
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import plotly.express as px
+import copy
 
 
 class Data:
@@ -24,14 +23,15 @@ class Data:
             self.dg_data[stat]['trim_t'] = stations[stat]
 
             dg_data = self.extract_data(data_folder, stat)
-            self.dg_data[stat]['ori_vx'] = dg_data['ori_vx']
-            self.dg_data[stat]['ori_vy'] = dg_data['ori_vy']
-            self.dg_data[stat]['ori_vz'] = dg_data['ori_vz']
-            self.dg_data[stat]['ori_time'] = dg_data['ori_time']
-            self.dg_data[stat]['vx'] = dg_data['vx']
-            self.dg_data[stat]['vy'] = dg_data['vy']
-            self.dg_data[stat]['vz'] = dg_data['vz']
-            self.dg_data[stat]['time'] = dg_data['time']
+            if dg_data:
+                self.dg_data[stat]['ori_vx'] = dg_data['ori_vx']
+                self.dg_data[stat]['ori_vy'] = dg_data['ori_vy']
+                self.dg_data[stat]['ori_vz'] = dg_data['ori_vz']
+                self.dg_data[stat]['ori_time'] = dg_data['ori_time']
+                self.dg_data[stat]['vx'] = dg_data['vx']
+                self.dg_data[stat]['vy'] = dg_data['vy']
+                self.dg_data[stat]['vz'] = dg_data['vz']
+                self.dg_data[stat]['time'] = dg_data['time']
 
     def extract_data(self, data_folder, stat):
         # Scan for simulation obspy files
@@ -39,38 +39,39 @@ class Data:
                 and f.name.startswith(self.name)
                 and f.name.__contains__(stat)]
 
+        dg_data = {}
         # print(velo[0].name)
         # for velo in velo_files:
         #     # Load synthetic data for each station
         #     stat = velo.name.split('_')[-1].split('.')[0]
-        print(f" station: {stat} ")
-        st = obspy.read(velo[0].path)
-        ti = st.traces[0].stats.starttime
-        tf = st.traces[0].stats.endtime
-        # st.plot()
+        # print(f" station: {stat} ")
+        if velo:
+            st = obspy.read(velo[0].path)
+            ti = st.traces[0].stats.starttime
+            tf = st.traces[0].stats.endtime
+            # st.plot()
 
-        # Save original data
-        ori_vx = st.traces[0].data
-        ori_vy = st.traces[1].data
-        ori_vz = st.traces[2].data
-        ori_time = st.traces[2].times()
-        print(ori_vx[:5])
+            # Save original data
+            ori_vx = copy.deepcopy(st.traces[0].data)
+            ori_vy = copy.deepcopy(st.traces[1].data)
+            ori_vz = copy.deepcopy(st.traces[2].data)
+            ori_time = copy.deepcopy(st.traces[2].times)
 
-        ti = st.traces[0].stats.starttime
-        tf = st.traces[0].stats.endtime
-        st.trim(ti + self.dg_data[stat]['trim_t'], tf)
-        st.normalize()
+            ti = st.traces[0].stats.starttime
+            tf = st.traces[0].stats.endtime
+            st.trim(ti + self.dg_data[stat]['trim_t'], tf)
+            st.normalize()
 
-        # Save normalized and time trim data
-        vx = st.traces[0].data
-        vy = st.traces[1].data
-        vz = st.traces[2].data
-        time = st.traces[2].times()
+            # Save normalized and time trim data
+            vx = st.traces[0].data
+            vy = st.traces[1].data
+            vz = st.traces[2].data
+            time = st.traces[2].times()
 
-        # Create and add a dict with each station synthetic data
-        dg_data = {'ori_vx': ori_vx, 'ori_vy': ori_vy,
-                   'ori_vz': ori_vz, 'ori_time': ori_time,
-                   'vx': vx, 'vy': vy, 'vz': vz, 'time': time}
+            # Create and add a dict with each station synthetic data
+            dg_data = {'ori_vx': ori_vx, 'ori_vy': ori_vy,
+                       'ori_vz': ori_vz, 'ori_time': ori_time,
+                       'vx': vx, 'vy': vy, 'vz': vz, 'time': time}
         return dg_data
 
     def extract_src_fields(self, sim_path):
@@ -121,19 +122,58 @@ class Data:
         fig_A.update_xaxes(row=2, col=1, title='strike', tickfont=tickfont,
                            range=[np.min(stk), np.max(stk)])
 
-        fig_A.show(renderer="browser")
+        # fig_A.show(renderer="browser")
 
-        fig_B = go.Figure()
+        fig_B = make_subplots(rows=1, cols=3, subplot_titles=('vx', 'vy', 'vz'),
+                              shared_yaxes=True, horizontal_spacing=0.1)
         for istat, stat in enumerate(self.dg_data.keys()):
-            fig_B.add_trace(go.Scatter(x=self.dg_data[stat]['time'],
-                                       y=self.dg_data[stat]['vx']+2.2*istat,
-                                       mode='lines'))
+            if 'ori_time' in self.dg_data[stat].keys():
+                ori_time = self.dg_data[stat]['ori_time']
+                ori_vx = self.dg_data[stat]['ori_vx']
+                ori_vy = self.dg_data[stat]['ori_vy']
+                ori_vz = self.dg_data[stat]['ori_vz']
+                max_vx = np.max(np.abs(ori_vx))
+                max_vy = np.max(np.abs(ori_vy))
+                max_vz = np.max(np.abs(ori_vz))
+                max_stat_vx = stat + '_' + str(max_vx)
+                max_stat_vy = stat + '_' + str(max_vy)
+                max_stat_vz = stat + '_' + str(max_vz)
+
+                time = self.dg_data[stat]['time']
+                vx = self.dg_data[stat]['vx']
+                vy = self.dg_data[stat]['vy']
+                vz = self.dg_data[stat]['vz']
+
+                fig_B.add_trace(go.Scatter(x=time, y=vx + istat * 2.2,
+                                           mode='lines', name=max_stat_vx),
+                                row=1, col=1)
+                fig_B.add_trace(go.Scatter(x=time, y=vy + istat * 2.2,
+                                           mode='lines', name=max_stat_vy),
+                                row=1, col=2)
+                fig_B.add_trace(go.Scatter(x=time, y=vz + istat * 2.2,
+                                           mode='lines', name=max_stat_vz),
+                                row=1, col=3)
+
+                fig_B.update_layout(title=dict(text=self.name,
+                                               font=dict(color="black", size=12,
+                                                         family="Arial Black"),
+                                               automargin=True))
 
         fig_B.show(renderer="browser")
 
+    # def plot_comparison(self, y_preds):
+    #     fig_B = go.Figure()
+    #     for istat, stat in enumerate(self.dg_data.keys()):
+    #         fig_B.add_trace(go.Scatter(x=self.dg_data[stat]['time'],
+    #                                    y=self.dg_data[stat]['vx']+2.2*istat,
+    #                                    name=stat, line=dict(color='black', width=4)))
+    #
+    #     fig_B.show(renderer="browser")
+
     def save_simulation_data(self, output_folder):
-        out_file = output_folder + self.name + ".pickle"
-        object_file = open(out_file, 'wb')
-        pickle.dump(self, object_file)
-        object_file.close()
-        print(f" Saving simulation data in: {out_file}")
+        if self.dg_data:
+            out_file = output_folder + self.name + ".pickle"
+            object_file = open(out_file, 'wb')
+            pickle.dump(self, object_file)
+            object_file.close()
+            print(f" Saving simulation data in: {out_file}")

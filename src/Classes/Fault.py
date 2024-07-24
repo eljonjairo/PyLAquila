@@ -35,7 +35,7 @@ class Fault:
         self.in_dstk = None  # Input size of subfaults in strike direction
         self.XF = None  # Interpolated matriz x coordinate matriz
         self.YF = None  # Interpolated matriz y coordinate matriz
-        self.ZF = None  # Interpolated matriz z coordinate matriz
+        self.ZF = None  # Interpolated matriz z coordeinate matriz
         self.xf = None  # Interpolated vector with x coordinate of the fault
         self.yf = None  # Interpolated vector with y coordinate of the fault
         self.zf = None  # Interpolated vector with z coordinate of the fault

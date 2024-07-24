@@ -19,7 +19,10 @@ if __name__ == '__main__':
     # Output folder
     output_folder = "Outputs/Fields/"
 
-    files = [f.path for f in scandir(input_folder) if f.is_file()]
+    model_id = "LAquilaCirella2012bdhF500m_ID_3"
+
+    files = [f.path for f in scandir(input_folder) if f.is_file()
+             and f.name.startswith(model_id)]
 
     for file in tqdm(files):
         f_name = file.split('/')[-1]
