@@ -51,11 +51,13 @@ class Data:
             tf = st.traces[0].stats.endtime
             # st.plot()
 
-            # Save original data
-            ori_vx = copy.deepcopy(st.traces[0].data)
-            ori_vy = copy.deepcopy(st.traces[1].data)
-            ori_vz = copy.deepcopy(st.traces[2].data)
-            ori_time = copy.deepcopy(st.traces[2].times)
+            # Save original data after filtering
+            st.filter('lowpass', freq=1.0, corners=2, zerophase=True)
+            ori_st = st.copy()
+            ori_vx = ori_st.traces[0].data
+            ori_vy = ori_st.traces[1].data
+            ori_vz = ori_st.traces[2].data
+            ori_time = ori_st.traces[2].times
 
             ti = st.traces[0].stats.starttime
             tf = st.traces[0].stats.endtime
@@ -177,3 +179,4 @@ class Data:
             pickle.dump(self, object_file)
             object_file.close()
             print(f" Saving simulation data in: {out_file}")
+

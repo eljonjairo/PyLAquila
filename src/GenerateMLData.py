@@ -8,7 +8,7 @@
 from Classes.LAquilaData import Data
 from os import scandir
 from tqdm import tqdm
-from os import remove
+
 
 if __name__ == '__main__':
 
