@@ -8,6 +8,7 @@
 from Classes.LAquilaData import Data
 from os import scandir
 from tqdm import tqdm
+import time
 
 
 if __name__ == '__main__':
@@ -15,6 +16,8 @@ if __name__ == '__main__':
     src_folder = "Outputs/Fields/"  # Folder with fields for each simulation
     data_folder = "Outputs/SyntheticVelo_1.0Hz/"  # Folder with DG synthetic velo
     output_folder = "Outputs/MLData_1.0Hz/"  # Output folder for simulation objects
+    low_freq = 1.0  # low pass freq
+    high_freq = 0.01  # high pass freq
 
     # Set the stations dict with name and trim time in secs
     # stations = {'AQK': 24, 'AQU': 24, 'AQV': 24, 'AQA': 24, 'AQG': 24,
@@ -24,27 +27,31 @@ if __name__ == '__main__':
     stations = {'AQK': 0, 'AQU': 0, 'AQV': 0, 'AQA': 0, 'AQG': 0,
                 'GSA': 0, 'MTR': 0, 'FMG': 0, 'ANT': 0, 'AVZ': 0,
                 'CSO1': 0, 'LSS': 0, 'SUL': 0}
+
+    # Scan src_folder for files with src distributions for each available simulation
     sims = [f for f in scandir(src_folder) if f.is_file()]
     n_sim = len(sims)
 
-    n_saved = 0
     ini = 0
     for sim in tqdm(sims[ini:]):
 
         name = sim.name.split('.')[0]
         print()
         print(f" Processing simulation: {name}")
-        data = Data(name)
-        data.set_dg_data(stations, data_folder)
+        data = Data(name)  # Create a Data object with the name of the simulation
+        # low_freq and high_freq are optional
+        # data.set_dg_data(stations, data_folder)
+        data.set_dg_data(stations, data_folder, low_freq=low_freq)
+        # data.set_dg_data(stations, data_folder, high_freq=high_freq)
+        # data.set_dg_data(stations, data_folder, low_freq=low_freq,
+        # high_freq=high_freq)
         data.extract_src_fields(sim.path)
         data.plot_simulation()
         print()
-        save = input(" Save the data object (q) ")
-        if save == 'q':
-            data.save_simulation_data(output_folder)
-            n_saved += 1
-        else:
-            # remove(sim.path)
-            print(f" {sim.name} not saved")
+        # save = input(" Save the data object (q) ").strip()
+        data.save_simulation_data(output_folder)
 
-    print(f" {n_saved} models.")
+        # time.sleep(1)
+
+
+

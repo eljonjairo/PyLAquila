@@ -8,72 +8,101 @@ from os import scandir
 import obspy
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import copy
 
 
 class Data:
     def __init__(self, name: str):
         self.name = name
-        self.dg_data = {}
         self.src = None
+        self.dg_data = {}
 
-    def set_dg_data(self, stations, data_folder):
+    def set_dg_data(self, stations, data_folder, low_freq=None, high_freq=None):
+
         for stat in stations.keys():
-            self.dg_data[stat] = {}
-            self.dg_data[stat]['trim_t'] = stations[stat]
 
-            dg_data = self.extract_data(data_folder, stat)
-            if dg_data:
-                self.dg_data[stat]['ori_vx'] = dg_data['ori_vx']
-                self.dg_data[stat]['ori_vy'] = dg_data['ori_vy']
-                self.dg_data[stat]['ori_vz'] = dg_data['ori_vz']
-                self.dg_data[stat]['ori_time'] = dg_data['ori_time']
-                self.dg_data[stat]['vx'] = dg_data['vx']
-                self.dg_data[stat]['vy'] = dg_data['vy']
-                self.dg_data[stat]['vz'] = dg_data['vz']
-                self.dg_data[stat]['time'] = dg_data['time']
+            #  Extract DG data for each station in a dict
+            self.dg_data[stat] = self.extract_data(data_folder, stat,
+                                                   low_freq=low_freq,
+                                                   high_freq=high_freq)
 
-    def extract_data(self, data_folder, stat):
-        # Scan for simulation obspy files
+    def extract_data(self, data_folder, stat, low_freq=None, high_freq=None):
+        # Scan obspy files for each simulation (self.name)
+        # and each station (stat) in folder (data_folder)
+
         velo = [f for f in scandir(data_folder) if f.is_file()
                 and f.name.startswith(self.name)
                 and f.name.__contains__(stat)]
 
         dg_data = {}
-        # print(velo[0].name)
-        # for velo in velo_files:
-        #     # Load synthetic data for each station
-        #     stat = velo.name.split('_')[-1].split('.')[0]
-        # print(f" station: {stat} ")
-        if velo:
+        if len(velo) > 0:  # Check if there are dg velo files for the simulation
+            dg_data['low_freq'] = low_freq
+            dg_data['high_freq'] = high_freq
             st = obspy.read(velo[0].path)
-            ti = st.traces[0].stats.starttime
-            tf = st.traces[0].stats.endtime
             # st.plot()
 
-            # Save original data after filtering
-            st.filter('lowpass', freq=1.0, corners=2, zerophase=True)
+            # Save original data
             ori_st = st.copy()
-            ori_vx = ori_st.traces[0].data
-            ori_vy = ori_st.traces[1].data
-            ori_vz = ori_st.traces[2].data
-            ori_time = ori_st.traces[2].times
+            dg_data['ori_vx'] = ori_st.traces[0].data
+            dg_data['ori_vy'] = ori_st.traces[1].data
+            dg_data['ori_vz'] = ori_st.traces[2].data
 
-            ti = st.traces[0].stats.starttime
-            tf = st.traces[0].stats.endtime
-            st.trim(ti + self.dg_data[stat]['trim_t'], tf)
-            st.normalize()
+            # Cut the initial zeros of the traces
+            # ti = st.traces[0].stats.starttime
+            # tf = st.traces[0].stats.endtime
+            # st.trim(ti + self.dg_data[stat]['trim_t'], tf)
 
-            # Save normalized and time trim data
-            vx = st.traces[0].data
-            vy = st.traces[1].data
-            vz = st.traces[2].data
-            time = st.traces[2].times()
+            # Save trimmed data
+            cut_st = st.copy()
+            dg_data['vx'] = cut_st.traces[0].data
+            dg_data['vy'] = cut_st.traces[1].data
+            dg_data['vz'] = cut_st.traces[2].data
 
-            # Create and add a dict with each station synthetic data
-            dg_data = {'ori_vx': ori_vx, 'ori_vy': ori_vy,
-                       'ori_vz': ori_vz, 'ori_time': ori_time,
-                       'vx': vx, 'vy': vy, 'vz': vz, 'time': time}
+            cut_norm_st = cut_st.copy()
+            cut_norm_st.normalize()
+            dg_data['norm_vx'] = cut_norm_st.traces[0].data
+            dg_data['norm_vy'] = cut_norm_st.traces[1].data
+            dg_data['norm_vz'] = cut_norm_st.traces[2].data
+
+            # Only low pass filtering
+            if low_freq and not high_freq:
+                st.filter('lowpass', freq=low_freq, corners=2, zerophase=True)
+                cut_low_filt_st = st.copy()
+                dg_data['low_vx'] = cut_low_filt_st.traces[0].data
+                dg_data['low_vy'] = cut_low_filt_st.traces[1].data
+                dg_data['low_vz'] = cut_low_filt_st.traces[2].data
+                st.normalize()
+                cut_low_filt_norm_st = st.copy()
+                dg_data['low_norm_vx'] = cut_low_filt_norm_st.traces[0].data
+                dg_data['low_norm_vy'] = cut_low_filt_norm_st.traces[1].data
+                dg_data['low_norm_vz'] = cut_low_filt_norm_st.traces[2].data
+
+            # Only high pass filtering
+            if not low_freq and high_freq:
+                st.filter('highpass', freq=high_freq, corners=2, zerophase=True)
+                cut_high_filt_st = st.copy()
+                dg_data['high_vx'] = cut_high_filt_st.traces[0].data
+                dg_data['high_vy'] = cut_high_filt_st.traces[1].data
+                dg_data['high_vz'] = cut_high_filt_st.traces[2].data
+                st.normalize()
+                cut_high_filt_norm_st = st.copy()
+                dg_data['high_norm_vx'] = cut_high_filt_norm_st.traces[0].data
+                dg_data['high_norm_vy'] = cut_high_filt_norm_st.traces[1].data
+                dg_data['high_norm_vz'] = cut_high_filt_norm_st.traces[2].data
+
+            # Bandpass filtering
+            if low_freq and high_freq:
+                st.filter('bandpass', freqmin=low_freq, freqmax=high_freq,
+                          corners=2, zerophase=True)
+                cut_band_filt_st = st.copy()
+                dg_data['band_vx'] = cut_band_filt_st.traces[0].data
+                dg_data['band_vy'] = cut_band_filt_st.traces[1].data
+                dg_data['band_vz'] = cut_band_filt_st.traces[2].data
+                st.normalize()
+                cut_band_filt_norm_st = st.copy()
+                dg_data['band_norm_vx'] = cut_band_filt_norm_st.traces[0].data
+                dg_data['band_norm_vy'] = cut_band_filt_norm_st.traces[1].data
+                dg_data['band_norm_vz'] = cut_band_filt_norm_st.traces[2].data
+
         return dg_data
 
     def extract_src_fields(self, sim_path):
@@ -87,6 +116,13 @@ class Data:
         stk = np.arange(self.src['n_stk'])
         dip = np.arange(self.src['n_dip'])
 
+        fig = make_subplots(rows=3, cols=4, subplot_titles=('slip', 'vx', 'vy',
+                                                            'vz', 'rupt_time',
+                                                            'cut_vx', 'cut_vy',
+                                                            'cut_vz',
+                                                            'rise time', 'filt_vx',
+                                                            'filt_vy', 'filt_vz'))
+
         tickfont = dict(color="black", size=12, family="Arial Black")
         xaxis = dict(title="<b> strike (Km) </b>", tickfont=tickfont)
         yaxis = dict(title="<b> dip (Km) </b>", tickfont=tickfont,
@@ -94,83 +130,188 @@ class Data:
         title_a = dict(text="<b> Interpolated Slip </b>",
                        font_family="Arial Black",
                        font_color="black", x=0.5, y=0.85)
-        colorbar_a = dict(lenmode='fraction', len=0.55, thickness=20,
-                          bordercolor="black", title="<b> slip (m) </b>",
-                          x=1.0, y=0.8)
-        data_a = go.Heatmap(z=self.src['SLIP'], x=stk, y=dip, hoverongaps=False,
-                            colorbar=colorbar_a)
+
+        # slip distribution with rupture time contours
+        colorbar_slip = dict(lenmode='fraction', len=0.21, thickness=15,
+                             bordercolor="black", orientation='h',
+                             x=0.11, y=0.66)
+        data_slip = go.Heatmap(z=self.src['SLIP'], x=stk, y=dip, hoverongaps=False,
+                               colorscale='cividis', colorbar=colorbar_slip)
         colorscale = [[0, 'rgb(250, 250, 250)'], [1.0, 'rgb(255, 255, 255)']]
         contours = dict(coloring='lines', showlabels=True)
-        data_b = go.Contour(z=self.src['RUPT_T'], x=stk, y=dip, contours=contours,
-                            line_width=2, showscale=False, colorscale=colorscale)
-        colorbar_c = dict(lenmode='fraction', len=0.55, thickness=20,
-                          bordercolor="black", title="<b> rise time (s) </b>",
-                          x=1.0, y=0.25)
-        data_c = go.Heatmap(z=self.src['RISE'], x=stk, y=dip, hoverongaps=False,
-                            colorbar=colorbar_c)
+        data_slip_rupt = go.Contour(z=self.src['RUPT_T'], x=stk, y=dip,
+                                    contours=contours, line_width=2,
+                                    showscale=False, colorscale=colorscale)
 
-        fig_A = make_subplots(rows=2, cols=1,
-                              subplot_titles=('slip with rupture time',
-                                              'rise time'),
-                              shared_xaxes=True, vertical_spacing=0.1)
+        # rupture time distribution
+        colorbar_rupt = dict(lenmode='fraction', len=0.21, thickness=15,
+                             bordercolor="black", orientation='h',
+                             x=0.11, y=0.28)
+        data_rupt = go.Heatmap(z=self.src['RUPT_T'], x=stk, y=dip, hoverongaps=False,
+                               colorbar=colorbar_rupt)
 
-        fig_A.add_trace(data_a, row=1, col=1)
-        fig_A.add_trace(data_b, row=1, col=1)
-        fig_A.add_trace(data_c, row=2, col=1)
-        fig_A.update_yaxes(row=1, col=1, autorange="reversed", title='dip',
-                           tickfont=tickfont, scaleanchor="x", scaleratio=1)
-        fig_A.update_yaxes(row=2, col=1, autorange="reversed", title='dip',
-                           tickfont=tickfont, scaleanchor="x", scaleratio=1)
-        fig_A.update_xaxes(row=2, col=1, title='strike', tickfont=tickfont,
-                           range=[np.min(stk), np.max(stk)])
+        # rupture time distribution
+        colorbar_rise = dict(lenmode='fraction', len=0.21, thickness=15,
+                             bordercolor="black", orientation='h',
+                             x=0.11, y=-0.13)
+        data_rise = go.Heatmap(z=self.src['RISE'], x=stk, y=dip, hoverongaps=False,
+                               colorbar=colorbar_rise)
 
-        # fig_A.show(renderer="browser")
+        fig.add_trace(data_slip, row=1, col=1)
+        fig.add_trace(data_slip_rupt, row=1, col=1)
+        fig.add_trace(data_rupt, row=2, col=1)
+        fig.add_trace(data_rise, row=3, col=1)
 
-        fig_B = make_subplots(rows=1, cols=3, subplot_titles=('vx', 'vy', 'vz'),
-                              shared_yaxes=True, horizontal_spacing=0.1)
+        fig.update_yaxes(row=1, col=1, autorange="reversed", title='dip',
+                         tickfont=tickfont, scaleanchor="x", scaleratio=1)
+        fig.update_yaxes(row=2, col=1, autorange="reversed", title='dip',
+                         tickfont=tickfont, scaleanchor="x", scaleratio=1)
+        fig.update_yaxes(row=3, col=1, autorange="reversed", title='dip',
+                         tickfont=tickfont, scaleanchor="x", scaleratio=1)
+        fig.update_xaxes(row=1, col=1, range=[np.min(stk), np.max(stk)])
+        fig.update_xaxes(row=2, col=1, range=[np.min(stk), np.max(stk)])
+        fig.update_xaxes(row=3, col=1, range=[np.min(stk), np.max(stk)])
+
         for istat, stat in enumerate(self.dg_data.keys()):
-            if 'ori_time' in self.dg_data[stat].keys():
-                ori_time = self.dg_data[stat]['ori_time']
-                ori_vx = self.dg_data[stat]['ori_vx']
-                ori_vy = self.dg_data[stat]['ori_vy']
-                ori_vz = self.dg_data[stat]['ori_vz']
-                max_vx = np.max(np.abs(ori_vx))
-                max_vy = np.max(np.abs(ori_vy))
-                max_vz = np.max(np.abs(ori_vz))
-                max_stat_vx = stat + '_' + str(max_vx)
-                max_stat_vy = stat + '_' + str(max_vy)
-                max_stat_vz = stat + '_' + str(max_vz)
 
-                time = self.dg_data[stat]['time']
-                vx = self.dg_data[stat]['vx']
-                vy = self.dg_data[stat]['vy']
-                vz = self.dg_data[stat]['vz']
+            vx = self.dg_data[stat]['ori_vx']
+            vy = self.dg_data[stat]['ori_vy']
+            vz = self.dg_data[stat]['ori_vz']
+            max_vx = np.max(np.abs(vx))
+            max_vy = np.max(np.abs(vy))
+            max_vz = np.max(np.abs(vz))
+            max_stat_vx = f"{stat} vx: {max_vx:.3f}"
+            max_stat_vy = f"{stat} vy: {max_vy:.3f}"
+            max_stat_vz = f"{stat} vz: {max_vz:.3f}"
+            fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                     name=max_stat_vx,
+                                     line=dict(color='red', width=1)),
+                          row=1, col=2)
+            fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                     name=max_stat_vy,
+                                     line=dict(color='black', width=1)),
+                          row=1, col=3)
+            fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                     name=max_stat_vz,
+                                     line=dict(color='blue', width=1)),
+                          row=1, col=4)
 
-                fig_B.add_trace(go.Scatter(x=time, y=vx + istat * 2.2,
-                                           mode='lines', name=max_stat_vx),
-                                row=1, col=1)
-                fig_B.add_trace(go.Scatter(x=time, y=vy + istat * 2.2,
-                                           mode='lines', name=max_stat_vy),
-                                row=1, col=2)
-                fig_B.add_trace(go.Scatter(x=time, y=vz + istat * 2.2,
-                                           mode='lines', name=max_stat_vz),
-                                row=1, col=3)
+            vx = self.dg_data[stat]['vx']
+            vy = self.dg_data[stat]['vy']
+            vz = self.dg_data[stat]['vz']
+            max_vx = np.max(np.abs(vx))
+            max_vy = np.max(np.abs(vy))
+            max_vz = np.max(np.abs(vz))
+            max_stat_vx = f"{stat} vx: {max_vx:.3f}"
+            max_stat_vy = f"{stat} vy: {max_vy:.3f}"
+            max_stat_vz = f"{stat} vz: {max_vz:.3f}"
 
-                fig_B.update_layout(title=dict(text=self.name,
-                                               font=dict(color="black", size=12,
-                                                         family="Arial Black"),
-                                               automargin=True))
+            fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                     name=max_stat_vx,
+                                     line=dict(color='red', width=1)),
+                          row=2, col=2)
+            fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                     name=max_stat_vy,
+                                     line=dict(color='black', width=1)),
+                          row=2, col=3)
+            fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                     name=max_stat_vz,
+                                     line=dict(color='blue', width=1)),
+                          row=2, col=4)
 
-        fig_B.show(renderer="browser")
+            low_freq = self.dg_data[stat]['low_freq']
+            high_freq = self.dg_data[stat]['high_freq']
 
-    # def plot_comparison(self, y_preds):
-    #     fig_B = go.Figure()
-    #     for istat, stat in enumerate(self.dg_data.keys()):
-    #         fig_B.add_trace(go.Scatter(x=self.dg_data[stat]['time'],
-    #                                    y=self.dg_data[stat]['vx']+2.2*istat,
-    #                                    name=stat, line=dict(color='black', width=4)))
-    #
-    #     fig_B.show(renderer="browser")
+            if low_freq and not high_freq:
+                vx = self.dg_data[stat]['low_norm_vx']
+                vy = self.dg_data[stat]['low_norm_vy']
+                vz = self.dg_data[stat]['low_norm_vz']
+                max_vx = np.max(np.abs(vx))
+                max_vy = np.max(np.abs(vy))
+                max_vz = np.max(np.abs(vz))
+
+                fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='red', width=1)),
+                              row=3, col=2)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='black', width=1)),
+                              row=3, col=3)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='blue', width=1)),
+                              row=3, col=4)
+
+            if not low_freq and high_freq:
+                vx = self.dg_data[stat]['high_norm_vx']
+                vy = self.dg_data[stat]['high_norm_vy']
+                vz = self.dg_data[stat]['high_norm_vz']
+                max_vx = np.max(np.abs(vx))
+                max_vy = np.max(np.abs(vy))
+                max_vz = np.max(np.abs(vz))
+
+                fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='red', width=1)),
+                              row=3, col=2)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='black', width=1)),
+                              row=3, col=3)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='blue', width=1)),
+                              row=3, col=4)
+
+            if low_freq and high_freq:
+                vx = self.dg_data[stat]['band_norm_vx']
+                vy = self.dg_data[stat]['band_norm_vy']
+                vz = self.dg_data[stat]['band_norm_vz']
+                max_vx = np.max(np.abs(vx))
+                max_vy = np.max(np.abs(vy))
+                max_vz = np.max(np.abs(vz))
+
+                fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='red', width=1)),
+                              row=3, col=2)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='black', width=1)),
+                              row=3, col=3)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                         showlegend=False,
+                                         line=dict(color='blue', width=1)),
+                              row=3, col=4)
+
+            if not low_freq and not high_freq:
+                vx = self.dg_data[stat]['norm_vx']
+                vy = self.dg_data[stat]['norm_vy']
+                vz = self.dg_data[stat]['norm_vz']
+                max_vx = np.max(np.abs(vx))
+                max_vy = np.max(np.abs(vy))
+                max_vz = np.max(np.abs(vz))
+
+                fig.add_trace(go.Scatter(y=vx + istat * max_vx, mode='lines',
+                                         line=dict(color='red', width=1),
+                              showlegend=False),
+                              row=3, col=2)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vy, mode='lines',
+                                         line=dict(color='black', width=1),
+                              showlegend=False),
+                              row=3, col=3)
+                fig.add_trace(go.Scatter(y=vx + istat * max_vz, mode='lines',
+                                         line=dict(color='blue', width=1),
+                                         showlegend=False),
+                              row=3, col=4)
+
+            fig.update_layout(title=dict(text=self.name,
+                                         font=dict(color="black", size=16,
+                                                   family="Arial Black"),
+                                         automargin=True))
+
+        fig.show(renderer="browser")
 
     def save_simulation_data(self, output_folder):
         if self.dg_data:

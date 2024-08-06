@@ -26,8 +26,8 @@ if __name__ == '__main__':
     teven = "2009-04-06T01:32:40"
 
     # Stations name in the same order as GEODG3D.acquisition DG file.
-    Stats = ["AQK", "AQU", "AQV", "AQA", "AQG", "GSA", "MTR", "FMG", "ANT", "AVZ",
-             "CSO1", "LSS", "SUL"]
+    Stats = ["AQK", "AQU", "AQV", "AQA", "AQG", "GSA", "MTR", "FMG", "ANT",
+             "AVZ", "CSO1", "LSS", "SUL"]
 
     nstats = int(len(Stats))
     # 0.5 Hz simulations
@@ -42,8 +42,12 @@ if __name__ == '__main__':
     print(" START PROGRAM ")
     print("  ")
 
+    ini_name = 'LAquila'  # All simulations
+    # ini_name = 'LAquila_ID1_'  # Reference simulation
+
     ini = 0
-    subfolders = [f.path for f in scandir(DGFolder) if f.is_dir()]
+    subfolders = [f.path for f in scandir(DGFolder) if f.is_dir()
+                  and f.name.startswith(ini_name)]
     for sub_f in tqdm(subfolders[ini:]):
         file = Path(sub_f)
         file_vx = file / "VX_1"
@@ -78,7 +82,8 @@ if __name__ == '__main__':
                     trace_vx.stats.npts = nt
                     trace_vx.stats.channel = "DGx"
                     trace_vx.data = velox_DG
-                    trace_vx.filter('lowpass', freq=1.0, corners=2, zerophase=True)
+                    # trace_vx.filter('lowpass', freq=1.0, corners=2,
+                    #                zerophase=True)
                     # trace_vx.plot()
 
                     trace_vy = obspy.Trace()
@@ -89,7 +94,8 @@ if __name__ == '__main__':
                     trace_vy.stats.channel = "DGy"
 
                     trace_vy.data = veloy_DG
-                    trace_vy.filter('lowpass', freq=1.0, corners=2, zerophase=True)
+                    # trace_vy.filter('lowpass', freq=1.0, corners=2,
+                    #                zerophase=True)
                     # trace_vy.plot()
 
                     trace_vz = obspy.Trace()
@@ -99,12 +105,13 @@ if __name__ == '__main__':
                     trace_vz.stats.npts = nt
                     trace_vz.stats.channel = "DGz"
                     trace_vz.data = veloz_DG
-                    trace_vz.filter('lowpass', freq=1.0, corners=2, zerophase=True)
+                    # trace_vz.filter('lowpass', freq=1.0, corners=2,
+                    #                zerophase=True)
                     # trace_vz.plot()
 
                     st = Stream([trace_vx, trace_vy, trace_vz])
-                    st_file = SynFolder + (sub_f.split('/')[-1] + '_DGVEL_' + Stats[istat]
-                                           + '.pickle')
+                    st_file = SynFolder + (sub_f.split('/')[-1] + '_DGVEL_'
+                                           + Stats[istat] + '.pickle')
 
                     print(f" Writing Stream in file: {st_file} ")
                     st.write(st_file, format="PICKLE")

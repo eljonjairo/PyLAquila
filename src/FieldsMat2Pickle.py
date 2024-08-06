@@ -19,7 +19,7 @@ if __name__ == '__main__':
     # Output folder
     output_folder = "Outputs/Fields/"
 
-    model_id = "LAquilaCirella2012bdhF500m_ID_3"
+    model_id = "LAquilaCirella2012bdhF500m_ID_11"
 
     files = [f.path for f in scandir(input_folder) if f.is_file()
              and f.name.startswith(model_id)]

@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Input folder
     input_folder = "Inputs/"
     files = [f.path for f in scandir(input_folder) if f.is_file()
-             and f.name.endswith('CIRE.mat')]
+             and f.name.endswith('GALL.mat')]
     dstk_out = 1.0
     nstk_out = 25
     ddip_out = 1.0
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         rise = RiseF((X, Y))
         RuptF = RGI((ori_dip, ori_stk), rupt_t, bounds_error=False,
                     fill_value=None)
-        rupt_t = RuptF((X, Y))
+        rupt_t = RuptF((X, Y) )
 
         slip_fact = np.ceil(np.max(slip))
         rise_fact = np.ceil(np.max(rise))
