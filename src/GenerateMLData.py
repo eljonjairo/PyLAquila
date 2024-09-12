@@ -45,7 +45,7 @@ if __name__ == '__main__':
     # Start looking for the simulations folders
     subfolders = [f.path for f in scandir(DGFolder) if f.is_dir()]
 
-    for sub_f in tqdm(subfolders[ini:1]):
+    for sub_f in tqdm(subfolders[ini:]):
         file = Path(sub_f)
         name = sub_f.split('/')[2]
         file_vx = file / "VX_1"

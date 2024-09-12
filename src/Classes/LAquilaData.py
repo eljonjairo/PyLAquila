@@ -1,5 +1,7 @@
 """
  Fault Class
+ John Diaz
+ September 2024
 """
 import pickle
 import numpy as np
