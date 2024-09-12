@@ -2,56 +2,79 @@
 # -*- coding: utf-8 -*-
 
 #
-# Save each simulation data with its src fields and DG synthetic wave fields
-# John Diaz july 2024
+# Generate pickle files with dg and src data fir each simulation
+#
+# John Diaz December 2022
 
-from Classes.LAquilaData import Data
+
+import numpy as np
 from os import scandir
+from pathlib import Path
+from Classes.LAquilaData import Data
 from tqdm import tqdm
-import time
-
 
 if __name__ == '__main__':
+    # DG folder
+    DGFolder = "../DGrun_1.0Hz_alpha_beta/"
 
-    src_folder = "Outputs/Fields/"  # Folder with fields for each simulation
-    data_folder = "Outputs/SyntheticVelo_1.0Hz/"  # Folder with DG synthetic velo
-    output_folder = "Outputs/MLData_1.0Hz/"  # Output folder for simulation objects
-    low_freq = 1.0  # low pass freq
-    high_freq = 0.01  # high pass freq
+    # Folder with fields for each simulation
+    src_folder = "/home/jon/PhD/codes/LAquila_2023/LAquila/3DFaults/3DFaults_mat/LAquilaCirella2012bdhF500m"
 
-    # Set the stations dict with name and trim time in secs
-    # stations = {'AQK': 24, 'AQU': 24, 'AQV': 24, 'AQA': 24, 'AQG': 24,
-    #             'GSA': 25, 'MTR': 26, 'FMG': 28, 'ANT': 28, 'AVZ': 29,
-    #             'CSO1': 30, 'LSS': 30, 'SUL': 31}
+    # Output Folder
+    output_folder = "Outputs/MLData_alpha_beta_1.0Hz/"  # Output folder for simulation objects
 
-    stations = {'AQK': 0, 'AQU': 0, 'AQV': 0, 'AQA': 0, 'AQG': 0,
-                'GSA': 0, 'MTR': 0, 'FMG': 0, 'ANT': 0, 'AVZ': 0,
-                'CSO1': 0, 'LSS': 0, 'SUL': 0}
+    # Stations name in the same order as GEODG3D.acquisition DG file.
+    stations = ["AQK", "AQU", "AQV", "AQA", "AQG", "GSA", "MTR", "FMG", "ANT",
+                "AVZ", "CSO1", "LSS", "SUL"]
 
-    # Scan src_folder for files with src distributions for each available simulation
-    sims = [f for f in scandir(src_folder) if f.is_file()]
-    n_sim = len(sims)
+    # 1.0 Hz simulations
+    nt = 816
+    dt = 0.0490204
 
+    # Cutoff freqs
+    freqmin = 0.02  # Cirella
+    freqmax = 1.0
+
+    print("  ")
+    print(" START PROGRAM ")
+    print("  ")
+
+    nstats = len(stations)
     ini = 0
-    for sim in tqdm(sims[ini:]):
 
-        name = sim.name.split('.')[0]
-        print()
-        print(f" Processing simulation: {name}")
-        data = Data(name)  # Create a Data object with the name of the simulation
-        # low_freq and high_freq are optional
-        # data.set_dg_data(stations, data_folder)
-        data.set_dg_data(stations, data_folder, low_freq=low_freq)
-        # data.set_dg_data(stations, data_folder, high_freq=high_freq)
-        # data.set_dg_data(stations, data_folder, low_freq=low_freq,
-        # high_freq=high_freq)
-        data.extract_src_fields(sim.path)
-        data.plot_simulation()
-        print()
-        # save = input(" Save the data object (q) ").strip()
-        data.save_simulation_data(output_folder)
+    # Start looking for the simulations folders
+    subfolders = [f.path for f in scandir(DGFolder) if f.is_dir()]
 
-        # time.sleep(1)
+    for sub_f in tqdm(subfolders[ini:1]):
+        file = Path(sub_f)
+        name = sub_f.split('/')[2]
+        file_vx = file / "VX_1"
+        if file_vx.exists():
+            file_vy = file / "VY_1"
+            file_vz = file / "VZ_1"
+            print("Loading DG velocity synthetic files:")
+            print(f"  {file_vx}")
+            print(f"  {file_vy}")
+            print(f"  {file_vz}")
 
+            # Create a Data object with the name of the simulation
+            data = Data(name, nstats, nt, dt, freqmin, freqmax)
 
+            # Download DG velo files and convert from m/s to in cm/s
+            velo_syn_x = np.reshape(np.fromfile(file_vx, dtype=np.float32),
+                                    (nstats, nt), order='F')*100
+            velo_syn_y = np.reshape(np.fromfile(file_vy, dtype=np.float32),
+                                    (nstats, nt), order='F')*100
+            velo_syn_z = np.reshape(np.fromfile(file_vz, dtype=np.float32),
+                                    (nstats, nt), order='F')*100
 
+            # Set velo traces
+            data.set_velo_acc(velo_syn_x, velo_syn_y, velo_syn_z, stations)
+            data.set_velo_spec()
+            data.set_arias()
+            data.set_src(src_folder)
+            data.plot_data()
+            data.save_simulation_data(output_folder)
+
+        else:
+            print(f" file {file_vx} not found")
