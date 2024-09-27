@@ -16,10 +16,10 @@ class Data:
         self.name = name  # Simulation dir name
         self.dt = dt  # Simulation traces dt
         self.nt = nt  # Simulation traces number of samples
-        self.time = {}  # Time array for traces
-        self.freq = {}  # Freq array for traces amplitude spectrum
-        self.freqmin = freqmin  # Min freq of bandpass filter
-        self.freqmax = freqmax  # Max freq of bandpass filter
+        self.time = None  # Time array for traces
+        self.freq = None  # Freq array for traces amplitude spectrum
+        self.freqmin = freqmin  # Min freq
+        self.freqmax = freqmax  # Max freq
         self.nstats = nstats  # Simulation number of stations
         self.dhF = None  # Size of square subfaults
         self.slip = None  # Slip distribution
@@ -29,10 +29,10 @@ class Data:
         self.data = {}  # DG Traces
 
     def set_velo_acc(self, velox, veloy, veloz, stations):
-        self.time = np.linspace(0, self.nt * self.dt, num=self.nt)
+        self.time = np.linspace(0, self.nt*self.dt, num=self.nt)
         # Design a Butterworth bandpass filter with order 4
-        nyq = 0.5 / self.dt
-        [b, a] = butter(4, [self.freqmin / nyq, self.freqmax / nyq], 'band')
+        nyq = 0.5/self.dt
+        [b, a] = butter(4, [self.freqmin/nyq, self.freqmax/nyq], 'band')
         for istat, stat in enumerate(stations):
             self.data[stat] = {}
             # Save station name
@@ -72,18 +72,18 @@ class Data:
             az = self.data[key]['az']
 
             # Calculate Arias Intensity
-            arias_int_x = np.cumsum(ax ** 2) * (np.pi / (2 * g)) * self.dt
-            arias_int_y = np.cumsum(ay ** 2) * (np.pi / (2 * g)) * self.dt
-            arias_int_z = np.cumsum(az ** 2) * (np.pi / (2 * g)) * self.dt
+            arias_int_x = np.cumsum(ax**2)*(np.pi/(2*g))*self.dt
+            arias_int_y = np.cumsum(ay**2)*(np.pi/(2*g))*self.dt
+            arias_int_z = np.cumsum(az**2)*(np.pi/(2*g))*self.dt
 
             # Calculate Arias Duration
             # Find the t_i where the Arias Intensity reaches 5% and 95%
-            arias_5_perc_x = 0.05 * arias_int_x[-1]
-            arias_95_perc_x = 0.95 * arias_int_x[-1]
-            arias_5_perc_y = 0.05 * arias_int_y[-1]
-            arias_95_perc_y = 0.95 * arias_int_y[-1]
-            arias_5_perc_z = 0.05 * arias_int_z[-1]
-            arias_95_perc_z = 0.95 * arias_int_z[-1]
+            arias_5_perc_x = 0.05*arias_int_x[-1]
+            arias_95_perc_x = 0.95*arias_int_x[-1]
+            arias_5_perc_y = 0.05*arias_int_y[-1]
+            arias_95_perc_y = 0.95*arias_int_y[-1]
+            arias_5_perc_z = 0.05*arias_int_z[-1]
+            arias_95_perc_z = 0.95*arias_int_z[-1]
 
             # Find the indices where the cumulative Arias Intensity crosses 5% and 95%
             t_5_perc_x = ax[np.where(arias_int_x >= arias_5_perc_x)][0]
@@ -94,9 +94,9 @@ class Data:
             t_95_perc_z = az[np.where(arias_int_z >= arias_95_perc_z)][0]
 
             # Arias Duration is the time difference between 5% and 95% Arias Intensity
-            arias_dur_x = t_95_perc_x - t_5_perc_x
-            arias_dur_y = t_95_perc_y - t_5_perc_y
-            arias_dur_z = t_95_perc_z - t_5_perc_z
+            arias_dur_x = t_95_perc_x-t_5_perc_x
+            arias_dur_y = t_95_perc_y-t_5_perc_y
+            arias_dur_z = t_95_perc_z-t_5_perc_z
 
             # Save results
             self.data[key]['ax'] = ax
@@ -116,7 +116,7 @@ class Data:
             self.data[key]['arias_dur_z'] = arias_dur_z
 
     def set_velo_spec(self):
-        self.freq = np.fft.fftfreq(self.nt, d=self.dt)[:self.nt // 2]
+        self.freq = np.fft.fftfreq(self.nt, d=self.dt)[:self.nt//2]
         for key in self.data.keys():
             # Perform FFT on the seismic trace
             fft_vx = np.fft.fft(self.data[key]['vx'])
@@ -124,16 +124,16 @@ class Data:
             fft_vz = np.fft.fft(self.data[key]['vz'])
 
             # Amplitude spectrum (take the magnitude of the FFT and normalize)
-            self.data[key]['spec_vx'] = np.abs(fft_vx)[:self.nt // 2] * 2 / self.nt
-            self.data[key]['spec_vy'] = np.abs(fft_vy)[:self.nt // 2] * 2 / self.nt
-            self.data[key]['spec_vz'] = np.abs(fft_vz)[:self.nt // 2] * 2 / self.nt
+            self.data[key]['spec_vx'] = np.abs(fft_vx)[:self.nt//2]*2/self.nt
+            self.data[key]['spec_vy'] = np.abs(fft_vy)[:self.nt//2]*2/self.nt
+            self.data[key]['spec_vz'] = np.abs(fft_vz)[:self.nt//2]*2/self.nt
 
     def set_src(self, src_folder: str):
         src_file = src_folder + self.name.split('LAquila_')[1].split('_1.0')[0] + '.mat'
         print(f" Loading src file: {src_file}")
         try:
             input_source = loadmat(src_file)
-            self.dhF = input_source['Fault3D']['dhF'][-1][0]
+            self.dhF = float(input_source['Fault3D']['dhF'][-1][0])
             self.slip = input_source['Fault3D']['slip'][-1][0]
             self.rise_t = input_source['Fault3D']['riseT'][-1][0]
             self.rupt_t = input_source['Fault3D']['rupTime'][-1][0]
@@ -167,18 +167,19 @@ class Data:
                               tickvals=[1000, 2000, 3000, 3000],
                               bordercolor="black", x=0.41, y=0.74, orientation='h')
 
-        fig.add_trace(go.Heatmap(z=self.slip, hoverongaps=False, colorscale='viridis',
-                                 colorbar=colorbar_slip, zmin=0, zmax=1.6),
-                      row=1, col=1)
-        fig.add_trace(go.Contour(z=self.rupt_t, contours=contours, line_width=2,
-                                 showscale=False, colorscale=colorscale),
-                      row=1, col=1)
-        fig.add_trace(go.Heatmap(z=self.rupt_v, hoverongaps=False, colorscale='hot',
-                                 zmin=1000, zmax=3000, colorbar=colorbar_ruptv),
-                      row=1, col=3)
-        fig.add_trace(go.Heatmap(z=self.rise_t, hoverongaps=False,
-                                 zmin=0, zmax=4.0, colorbar=colorbar_rise),
-                      row=1, col=2)
+        if self.slip:
+            fig.add_trace(go.Heatmap(z=self.slip, hoverongaps=False, colorscale='viridis',
+                                     colorbar=colorbar_slip, zmin=0, zmax=1.6),
+                          row=1, col=1)
+            fig.add_trace(go.Contour(z=self.rupt_t, contours=contours, line_width=2,
+                                     showscale=False, colorscale=colorscale),
+                          row=1, col=1)
+            fig.add_trace(go.Heatmap(z=self.rupt_v, hoverongaps=False, colorscale='hot',
+                                     zmin=1000, zmax=3000, colorbar=colorbar_ruptv),
+                          row=1, col=3)
+            fig.add_trace(go.Heatmap(z=self.rise_t, hoverongaps=False,
+                                     zmin=0, zmax=4.0, colorbar=colorbar_rise),
+                          row=1, col=2)
 
         time = self.time
         # freq = np.log(self.freq)
@@ -240,7 +241,6 @@ class Data:
             fig.add_trace(go.Scatter(y=arias_z, x=time, mode='lines', showlegend=False,
                                      line=dict(color=pcolors[k], width=1)), row=3, col=3)
 
-        ndip, nstk = np.shape(self.slip)
         fig.update_xaxes(title='time (s)', row=1, col=4)
         fig.update_xaxes(title='time (s)', row=1, col=5)
         fig.update_xaxes(title='time (s)', row=1, col=6)
@@ -265,12 +265,14 @@ class Data:
         fig.update_yaxes(title='Arias Intensity x', row=3, col=1)
         fig.update_yaxes(title='Arias Intensity y', row=3, col=2)
         fig.update_yaxes(title='Arias Intensity z', row=3, col=3)
-        fig.update_yaxes(autorange="reversed", scaleanchor="x",
-                         range=[ndip, 0], row=1, col=1)
-        fig.update_yaxes(autorange="reversed", scaleanchor="x",
-                         range=[ndip, 0], row=1, col=2)
-        fig.update_yaxes(autorange="reversed", scaleanchor="x",
-                         range=[ndip, 0], row=1, col=3)
+        if self.slip:
+            ndip, nstk = np.shape(self.slip)
+            fig.update_yaxes(autorange="reversed", scaleanchor="x",
+                             range=[ndip, 0], row=1, col=1)
+            fig.update_yaxes(autorange="reversed", scaleanchor="x",
+                             range=[ndip, 0], row=1, col=2)
+            fig.update_yaxes(autorange="reversed", scaleanchor="x",
+                             range=[ndip, 0], row=1, col=3)
         fig.update_layout(title_text=self.name, titlefont=tickfont)
         fig.show(renderer="browser")
 
